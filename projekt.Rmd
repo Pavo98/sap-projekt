@@ -1,0 +1,53 @@
+---
+title: "Projekt SAP"
+author: "Pavo Matanovic, Karla Baricevic, Slavko Boldin"
+subtitle: Tema 2 - Uloga izvoza i uvoza u gospodarstvu
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+# Ucitavanje podataka i deskriptivna analiza
+
+Na pocetku ucitavamo podatke i analiziramo kako izgledaju podaci.
+
+```{r}
+export.data = read.csv("Export_data.csv")
+head(export.data)
+
+import.data = read.csv("Import_data.csv")
+head(import.data)
+
+gdp.data = read.csv("GDP_data.csv")
+head(gdp.data)
+
+gdp.pc.data = read.csv("GDPpercapita_data.csv")
+head(gdp.pc.data)
+```
+
+```{r}
+export.loc.cnt = export.data %>% group_by(LOCATION) %>%
+    summarise(n = n(), n_estimates = sum(Flag.Codes == 'E')) %>%
+    arrange(desc(n), n_estimates)
+head(export.loc.cnt)
+```
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

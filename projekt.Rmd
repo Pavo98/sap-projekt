@@ -1,6 +1,6 @@
 ---
 title: "Projekt SAP"
-author: "Pavo Matanovic, Karla Baricevic, Slavko Boldin"
+author: "Pavo Matanović, Karla Baričević, Slavko Boldin"
 subtitle: Tema 2 - Uloga izvoza i uvoza u gospodarstvu
 output:
   pdf_document: default
@@ -15,9 +15,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
-# Ucitavanje podataka i deskriptivna analiza
+# Učitavanje podataka i deskriptivna analiza
 
-Na pocetku ucitavamo podatke i analiziramo kako izgledaju podaci.
+Na početku učitavamo podatke i analiziramo kako izgledaju podaci.
 
 ```{r}
 export.data = read.csv("Export_data.csv")

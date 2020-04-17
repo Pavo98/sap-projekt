@@ -35,9 +35,21 @@ head(gdp.pc.data)
 
 ```{r}
 export.loc.cnt = export.data %>% group_by(LOCATION) %>%
-    summarise(n = n(), n_estimates = sum(Flag.Codes == 'E')) %>%
-    arrange(desc(n), n_estimates)
-head(export.loc.cnt)
+    summarise(exp_n = n(), exp_estimates = sum(Flag.Codes == 'E')) %>%
+    arrange(desc(exp_n), exp_estimates)
+import.loc.cnt = import.data %>% group_by(LOCATION) %>%
+    summarise(imp_n = n(), imp_estimates = sum(Flag.Codes == 'E')) %>%
+    arrange(desc(imp_n), imp_estimates)
+gdp.loc.cnt = gdp.data %>% group_by(LOCATION) %>%
+    summarise(gdp_n = n(), gdp_estimates = sum(Flag.Codes == 'E')) %>%
+    arrange(desc(gdp_n), gdp_estimates)
+gdp.pc.loc.cnt = gdp.pc.data %>% group_by(LOCATION) %>%
+    summarise(gdp_pc_n = n(), gdp_pc_estimates = sum(Flag.Codes == 'E')) %>%
+    arrange(desc(gdp_pc_n), gdp_pc_estimates)
+loc.cnt = merge(merge(export.loc.cnt, import.loc.cnt), merge(gdp.loc.cnt, gdp.pc.loc.cnt))
+View(arrange(loc.cnt,
+             desc(loc.cnt[,2]), desc(loc.cnt[,4]), desc(loc.cnt[,6]), desc(loc.cnt[,8]),
+             loc.cnt[,3], loc.cnt[,4], loc.cnt[,5], loc.cnt[,6]))
 ```
 
 

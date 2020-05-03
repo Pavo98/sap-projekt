@@ -1,11 +1,14 @@
 ---
 title: "Projekt SAP"
+<<<<<<< Updated upstream
 author: "Pavo Matanović, Karla Baričević, Slavko Boldin"
 subtitle: Tema 2 - Uloga izvoza i uvoza u gospodarstvu
+=======
+author: "Pavo Matanovic, Karla Baricevic, Slavko Boldin"
+subtitle: "Tema 2 - Uloga izvoza i uvoza u gospodarstvu"
+>>>>>>> Stashed changes
 output:
   pdf_document: default
-  html_document:
-    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -21,45 +24,44 @@ Na početku učitavamo podatke i analiziramo kako izgledaju podaci.
 
 ```{r}
 export.data = read.csv("Export_data.csv")
-head(export.data)
+# head(export.data)
 
 import.data = read.csv("Import_data.csv")
-head(import.data)
+# head(import.data)
 
 gdp.data = read.csv("GDP_data.csv")
-head(gdp.data)
+# head(gdp.data)
 
 gdp.pc.data = read.csv("GDPpercapita_data.csv")
-head(gdp.pc.data)
+# head(gdp.pc.data)
 ```
+
+Sljedeći blok koda generira dataframe sa brojem upisanih podataka te brojem procjena među upisanim podacima.
 
 ```{r}
 export.loc.cnt = export.data %>% group_by(LOCATION) %>%
-    summarise(exp_n = n(), exp_estimates = sum(Flag.Codes == 'E')) %>%
-    arrange(desc(exp_n), exp_estimates)
+    summarise(exp_n = n(), exp_est = sum(Flag.Codes == 'E')) %>%
+    arrange(desc(exp_n), exp_est)
 import.loc.cnt = import.data %>% group_by(LOCATION) %>%
-    summarise(imp_n = n(), imp_estimates = sum(Flag.Codes == 'E')) %>%
-    arrange(desc(imp_n), imp_estimates)
+    summarise(imp_n = n(), imp_est = sum(Flag.Codes == 'E')) %>%
+    arrange(desc(imp_n), imp_est)
 gdp.loc.cnt = gdp.data %>% group_by(LOCATION) %>%
-    summarise(gdp_n = n(), gdp_estimates = sum(Flag.Codes == 'E')) %>%
-    arrange(desc(gdp_n), gdp_estimates)
+    summarise(gdp_n = n(), gdp_est = sum(Flag.Codes == 'E')) %>%
+    arrange(desc(gdp_n), gdp_est)
 gdp.pc.loc.cnt = gdp.pc.data %>% group_by(LOCATION) %>%
-    summarise(gdp_pc_n = n(), gdp_pc_estimates = sum(Flag.Codes == 'E')) %>%
-    arrange(desc(gdp_pc_n), gdp_pc_estimates)
+    summarise(gdp_pc_n = n(), gdp_pc_est = sum(Flag.Codes == 'E')) %>%
+    arrange(desc(gdp_pc_n), gdp_pc_est)
 loc.cnt = merge(merge(export.loc.cnt, import.loc.cnt), merge(gdp.loc.cnt, gdp.pc.loc.cnt))
-View(arrange(loc.cnt,
-             desc(loc.cnt[,2]), desc(loc.cnt[,4]), desc(loc.cnt[,6]), desc(loc.cnt[,8]),
-             loc.cnt[,3], loc.cnt[,4], loc.cnt[,5], loc.cnt[,6]))
+knitr::kable(
+  head(arrange(loc.cnt,
+               desc(loc.cnt[,2]), desc(loc.cnt[,4]), desc(loc.cnt[,6]), desc(loc.cnt[,8]),
+               loc.cnt[,3], loc.cnt[,4], loc.cnt[,5], loc.cnt[,6]), 20),
+  caption = "Broj podataka za pojedinu državu"
+)
+
 ```
 
+### Odabrane drzave
+Odabrali smo USA, Francusku i Izrael za analizu.
 
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Deskriptivna statistika

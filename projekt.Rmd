@@ -4,6 +4,8 @@ author: "Pavo Matanović, Karla Baričević, Slavko Boldin"
 subtitle: "Tema 2 - Uloga izvoza i uvoza u gospodarstvu"
 output:
   pdf_document: default
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -63,6 +65,7 @@ remove(export.loc.cnt, import.loc.cnt, gdp.loc.cnt, gdp.pc.loc.cnt, loc.cnt)
 Odabrali smo USA, Njemačku(DEU) i Grčku(GRC) za analizu.
 
 ```{r}
+time = 1979:2019
 usa = data.frame(export.mln_usd = export.data$Value[export.data$LOCATION == "USA"],
                  import.mln_usd = import.data$Value[import.data$LOCATION == "USA"],
                  gdp.mln_usd = gdp.data$Value[gdp.data$LOCATION == "USA"],
@@ -90,6 +93,17 @@ deu = deu %>% mutate(import.mln_usd,
 grc = grc %>% mutate(import.mln_usd,
                      import.growth = import.mln_usd - lag(import.mln_usd),
                      import.growth.percentage = import.growth / lag(import.mln_usd) * 100)
+```
+
+```{r}
+interpolate.usa = data.frame(t(rep(NA, length(names(usa)))))
+names(interpolate.usa) = names(usa)
+interpolate.usa$import.growth.percentage = mean(usa$import.growth.percentage
+                                                [time >= 2013 & time < 2019])
+interpolate.usa$import.mln_usd = usa$import.mln_usd[nrow(usa)] *
+                                 (1 + interpolate.usa$import.growth.percentage / 100)
+interpolate.usa$import.growth = interpolate.usa$import.mln_usd - usa$import.mln_usd[nrow(usa)]
+usa = rbind(usa, interpolate.usa)
 ```
 
 ```{r}

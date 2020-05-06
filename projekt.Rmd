@@ -80,6 +80,24 @@ grc = data.frame(export.mln_usd = export.data$Value[export.data$LOCATION == "GRC
 grc$net.trade = grc$export.mln_usd - grc$import.mln_usd
 ```
 
+```{r}
+usa = usa %>% mutate(import.mln_usd,
+                     import.growth = import.mln_usd - lag(import.mln_usd),
+                     import.growth.percentage = import.growth / lag(import.mln_usd) * 100)
+deu = deu %>% mutate(import.mln_usd, 
+                     import.growth = import.mln_usd - lag(import.mln_usd),
+                     import.growth.percentage = import.growth / lag(import.mln_usd) * 100)
+grc = grc %>% mutate(import.mln_usd,
+                     import.growth = import.mln_usd - lag(import.mln_usd),
+                     import.growth.percentage = import.growth / lag(import.mln_usd) * 100)
+```
+
+```{r}
+summary(usa)
+summary(deu)
+summary(grc)
+```
+
 ## Deskriptivna statistika
 
 ```{r}
@@ -103,11 +121,6 @@ t.test(log(deu$import.mln_usd), log(grc$import.mln_usd),
        alternative = "g", var.equal = FALSE)
 ```
 
-```{r}
-usa = usa %>% mutate(import.mln_usd, import.growth = import.mln_usd - lag(import.mln_usd))
-deu = deu %>% mutate(import.mln_usd, import.growth = import.mln_usd - lag(import.mln_usd))
-grc = grc %>% mutate(import.mln_usd, import.growth = import.mln_usd - lag(import.mln_usd))
-```
 
 ```{r}
 time = 1979:2019

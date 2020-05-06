@@ -1,12 +1,7 @@
 ---
 title: "Projekt SAP"
-<<<<<<< Updated upstream
 author: "Pavo Matanović, Karla Baričević, Slavko Boldin"
-subtitle: Tema 2 - Uloga izvoza i uvoza u gospodarstvu
-=======
-author: "Pavo Matanovic, Karla Baricevic, Slavko Boldin"
 subtitle: "Tema 2 - Uloga izvoza i uvoza u gospodarstvu"
->>>>>>> Stashed changes
 output:
   pdf_document: default
 ---
@@ -55,13 +50,69 @@ loc.cnt = merge(merge(export.loc.cnt, import.loc.cnt), merge(gdp.loc.cnt, gdp.pc
 knitr::kable(
   head(arrange(loc.cnt,
                desc(loc.cnt[,2]), desc(loc.cnt[,4]), desc(loc.cnt[,6]), desc(loc.cnt[,8]),
-               loc.cnt[,3], loc.cnt[,4], loc.cnt[,5], loc.cnt[,6]), 20),
+               loc.cnt[,3], loc.cnt[,5], loc.cnt[,7], loc.cnt[,9]), 20),
   caption = "Broj podataka za pojedinu državu"
 )
+```
 
+```{r, include=FALSE}
+remove(export.loc.cnt, import.loc.cnt, gdp.loc.cnt, gdp.pc.loc.cnt, loc.cnt)
 ```
 
 ### Odabrane drzave
-Odabrali smo USA, Francusku i Izrael za analizu.
+Odabrali smo USA, Njemačku(DEU) i Grčku(GRC) za analizu.
+
+```{r}
+usa = data.frame(export.mln_usd = export.data$Value[export.data$LOCATION == "USA"],
+                 import.mln_usd = import.data$Value[import.data$LOCATION == "USA"],
+                 gdp.mln_usd = gdp.data$Value[gdp.data$LOCATION == "USA"],
+                 gdp.pc.usd_cap = gdp.pc.data$Value[gdp.pc.data$LOCATION == "USA"])
+usa$net.trade = usa$export.mln_usd - usa$import.mln_usd
+deu = data.frame(export.mln_usd = export.data$Value[export.data$LOCATION == "DEU"],
+                 import.mln_usd = import.data$Value[import.data$LOCATION == "DEU"],
+                 gdp.mln_usd = gdp.data$Value[gdp.data$LOCATION == "DEU"],
+                 gdp.pc.usd_cap = gdp.pc.data$Value[gdp.pc.data$LOCATION == "DEU"])
+deu$net.trade = deu$export.mln_usd - deu$import.mln_usd
+grc = data.frame(export.mln_usd = export.data$Value[export.data$LOCATION == "GRC"],
+                 import.mln_usd = import.data$Value[import.data$LOCATION == "GRC"],
+                 gdp.mln_usd = gdp.data$Value[gdp.data$LOCATION == "GRC"],
+                 gdp.pc.usd_cap = gdp.pc.data$Value[gdp.pc.data$LOCATION == "GRC"])
+grc$net.trade = grc$export.mln_usd - grc$import.mln_usd
+```
 
 ## Deskriptivna statistika
+
+```{r}
+boxplot(deu$import.mln_usd,
+        usa$import.mln_usd,
+        grc$import.mln_usd,
+        names = c("DEU", "USA", "GRC"), main = "Sredine uvoza",
+        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
+        ylab = "mln USD (log skala)",
+        log = "y")
+```
+
+Vidimo da im se čisti izvoz u mil. USD razlikuje jako čak i na logaritamskoj skali.
+
+To možemo potvrditi i statističkim t testom.
+
+```{r}
+t.test(log(usa$import.mln_usd), log(deu$import.mln_usd),
+       alternative = "g", var.equal = FALSE)
+t.test(log(deu$import.mln_usd), log(grc$import.mln_usd),
+       alternative = "g", var.equal = FALSE)
+```
+
+```{r}
+usa = usa %>% mutate(import.mln_usd, import.growth = import.mln_usd - lag(import.mln_usd))
+deu = deu %>% mutate(import.mln_usd, import.growth = import.mln_usd - lag(import.mln_usd))
+grc = grc %>% mutate(import.mln_usd, import.growth = import.mln_usd - lag(import.mln_usd))
+```
+
+```{r}
+time = 1979:2019
+plot(time, deu$import.growth, type = "h", main = "Rast uvoza (DEU)")
+```
+
+
+

@@ -126,20 +126,61 @@ boxplot(deu$import.mln_usd,
 
 Vidimo da im se čisti izvoz u mil. USD razlikuje jako čak i na logaritamskoj skali.
 
-To možemo potvrditi i statističkim t testom.
-
 ```{r}
-t.test(log(usa$import.mln_usd), log(deu$import.mln_usd),
-       alternative = "g", var.equal = FALSE)
-t.test(log(deu$import.mln_usd), log(grc$import.mln_usd),
-       alternative = "g", var.equal = FALSE)
+par(mfrow = c(1, 3), oma = c(0, 0, 2, 0))
+hist(usa$import.mln_usd, main="USA", xlab="mln USD", col="deepskyblue")
+hist(deu$import.mln_usd, main="DEU", xlab="mln USD", col="deepskyblue")
+hist(grc$import.mln_usd, main="GRC", xlab="mln USD", col="deepskyblue")
+mtext("Ukupan uvoz", outer = T, cex = 1.5)
 ```
 
+Za distribucije ukupnog izvoza ne možemo pretpostaviti normalnost, pa nema smisla raditi parametarske testove.
+
+Usporedimo sada postotnu promjenu izvoza.
 
 ```{r}
-time = 1979:2019
-plot(time, deu$import.growth, type = "h", main = "Rast uvoza (DEU)")
+par(mfrow = c(1, 3), oma = c(0, 0, 2, 0))
+hist(usa$import.growth.percentage, main="USA", xlab="rast %", col="deepskyblue")
+hist(deu$import.growth.percentage, main="DEU", xlab="rast %", col="deepskyblue")
+hist(grc$import.growth.percentage, main="GRC", xlab="rast %", col="deepskyblue")
+mtext("Postotni rast uvoza", outer = T, cex = 1.5)
 ```
 
+Distribucije nisu previše zakrivljene i imamo dovoljno podataka da možemo pretpostaviti normalnost distribucije.
+
+Taj zaključak potvrđuju i qq plotovi.
+
+```{r}
+qqnorm(usa$import.growth.percentage)
+qqline(usa$import.growth.percentage, col = "steelblue", lwd = 2)
+
+qqnorm(deu$import.growth.percentage)
+qqline(deu$import.growth.percentage, col = "steelblue", lwd = 2)
+
+qqnorm(grc$import.growth.percentage)
+qqline(grc$import.growth.percentage, col = "steelblue", lwd = 2)
+```
+
+```{r}
+boxplot(deu$import.growth.percentage,
+        usa$import.growth.percentage,
+        grc$import.growth.percentage,
+        names = c("DEU", "USA", "GRC"), main = "Boxplot postotnog porasta uvoza",
+        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
+        ylab = "Postotak")
+```
+
+Ovaj plot pokazuje da bi varijable USA i DEU mogle imati istu sredinu. Provjerimo to sa t testom.
+
+```{r}
+t.test(usa$import.growth.percentage[-c(1)], deu$import.growth.percentage[-c(1)],
+       alternative = "g")
+```
+
+```{r}
+deu[-c(1), ] %>% with(hist(import.growth.percentage,
+                           breaks = seq(min(import.growth.percentage) - 0.5,
+                                        max(import.growth.percentage) + 0.5, length.out = 9)))
+```
 
 

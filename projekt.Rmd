@@ -18,16 +18,16 @@ library(tidyverse)
 Na početku učitavamo podatke i analiziramo kako izgledaju podaci.
 
 ```{r}
-export.data = read.csv("Export_data.csv")
+export.data = read.csv("Export_data.csv", fileEncoding="UTF-8-BOM")
 # head(export.data)
 
-import.data = read.csv("Import_data.csv")
+import.data = read.csv("Import_data.csv", fileEncoding="UTF-8-BOM")
 # head(import.data)
 
-gdp.data = read.csv("GDP_data.csv")
+gdp.data = read.csv("GDP_data.csv", fileEncoding="UTF-8-BOM")
 # head(gdp.data)
 
-gdp.pc.data = read.csv("GDPpercapita_data.csv")
+gdp.pc.data = read.csv("GDPpercapita_data.csv", fileEncoding="UTF-8-BOM")
 # head(gdp.pc.data)
 ```
 
@@ -55,7 +55,7 @@ knitr::kable(
 )
 ```
 
-```{r, include=FALSE}
+```{{r, include=FALSE}
 remove(export.loc.cnt, import.loc.cnt, gdp.loc.cnt, gdp.pc.loc.cnt, loc.cnt)
 ```
 
@@ -92,7 +92,7 @@ boxplot(deu$import.mln_usd,
         log = "y")
 ```
 
-Vidimo da im se čisti izvoz u mil. USD razlikuje jako čak i na logaritamskoj skali.
+Vidimo da im se čisti uvoz u mil. USD razlikuje jako čak i na logaritamskoj skali.
 
 To možemo potvrditi i statističkim t testom.
 
@@ -114,5 +114,29 @@ time = 1979:2019
 plot(time, deu$import.growth, type = "h", main = "Rast uvoza (DEU)")
 ```
 
+#### Izvoz
 
+```{r}
+boxplot(deu$export.mln_usd,
+        usa$export.mln_usd,
+        grc$export.mln_usd,
+        names = c("DEU", "USA", "GRC"), main = "Sredine izvoza",
+        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
+        ylab = "mln USD (log skala)",
+        log = "y")
+```
 
+Podaci su slični kao i kod uvoza, SAD prednjači i u izvozu u odnosu na Njemačku i Grčku.
+
+```{r}
+usa = usa %>% mutate(export.mln_usd, export.growth = export.mln_usd - lag(export.mln_usd))
+deu = deu %>% mutate(export.mln_usd, export.growth = export.mln_usd - lag(export.mln_usd))
+grc = grc %>% mutate(export.mln_usd, export.growth = export.mln_usd - lag(export.mln_usd))
+```
+
+```{r}
+time = 1979:2019
+plot(time, deu$export.growth, type = "h", main = "Rast izvoza (DEU)")
+```
+
+Za razliku od uvoza koji linearno raste, izvoz više "osjeća" promjene na tržištu (veće fluktuacije), npr. značajan pad izvoza 2009. godine zbog tadašnje svjetske gospodarske krize.

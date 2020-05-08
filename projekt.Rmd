@@ -86,8 +86,6 @@ grc = data.frame(export.mln_usd = export.data$Value[export.data$LOCATION == "GRC
 grc$net.trade = grc$export.mln_usd - grc$import.mln_usd
 ```
 
-#### Izvoz
-
 ```{r}
 usa = usa %>% mutate(import.mln_usd,
                      import.growth = import.mln_usd - lag(import.mln_usd),
@@ -116,6 +114,8 @@ summary(usa)
 summary(deu)
 summary(grc)
 ```
+
+## Uvoz
 
 ```{r}
 boxplot(deu$import.mln_usd,
@@ -204,19 +204,6 @@ boxplot(deu$import.growth.percentage,
 Ovaj plot pokazuje da bi varijable USA i DEU mogle imati istu sredinu.
 To ćemo provjeriti t testom u idućem poglavlju.
 
-## Testiranje hipoteza
-
-#### Hipoteza 0: USA i DEU imaju jednaku sredinu postotne promjene uvoza
-
-Alternativna hipoteza: USA ima veću postotnu promjenu uvoza.
-
-```{r}
-t.test(usa$import.growth.percentage[-c(1)], deu$import.growth.percentage[-c(1)],
-       alternative = "g")
-```
-
-Test pokazuje da odbacujemo $H0$ i priklanjamo se hipotezi $H1$. USA ima veće fluktuacije u rastu uvoza.
-
 ```{r, include=FALSE}
 fixed.num.breaks <- function(x, length.out = 11) {
   return(seq(min(x, na.rm = T) - 0.5, max(x, na.rm = T) + 0.5, length.out = length.out))
@@ -224,6 +211,8 @@ fixed.num.breaks <- function(x, length.out = 11) {
 deu[-c(1), ] %>% with(hist(import.growth.percentage,
                            breaks = fixed.num.breaks(import.growth.percentage)))
 ```
+
+## Izvoz
 
 ```{r}
 boxplot(deu$export.mln_usd,
@@ -282,3 +271,17 @@ time = 1979:2019
 plot(time, deu$gdp.growth, type = "h", main = "Rast BDP-a (DEU)")
 ```
 BDP Njemačke je u stalnom porastu uz fluktuacije, a jedini pad BDP-a koji primjećujemo vezan je uz gospodarsku krizu 2009. godine, kada primjećujemo i značajne padove u uvozu i izvozu. Rast BDP-a po stanovniku bit će proporcionalan.
+
+## Testiranje hipoteza
+
+#### Hipoteza 0: USA i DEU imaju jednaku sredinu postotne promjene uvoza
+
+Alternativna hipoteza: USA ima veću postotnu promjenu uvoza.
+
+```{r}
+t.test(usa$import.growth.percentage[-c(1)], deu$import.growth.percentage[-c(1)],
+       alternative = "g")
+```
+
+Test pokazuje da odbacujemo $H0$ i priklanjamo se hipotezi $H1$. USA ima veće fluktuacije u rastu uvoza.
+

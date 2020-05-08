@@ -4,6 +4,8 @@ author: "Pavo Matanović, Karla Baričević, Slavko Boldin"
 subtitle: "Tema 2 - Uloga izvoza i uvoza u gospodarstvu"
 output:
   pdf_document: default
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +13,7 @@ library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+Sys.setlocale(locale = "hr_HR.utf8")
 ```
 
 # Učitavanje podataka i deskriptivna analiza
@@ -62,7 +65,10 @@ remove(export.loc.cnt, import.loc.cnt, gdp.loc.cnt, gdp.pc.loc.cnt, loc.cnt)
 ### Odabrane drzave
 Odabrali smo USA, Njemačku(DEU) i Grčku(GRC) za analizu.
 
+## Deskriptivna statistika
+
 ```{r}
+time = 1979:2019
 usa = data.frame(export.mln_usd = export.data$Value[export.data$LOCATION == "USA"],
                  import.mln_usd = import.data$Value[import.data$LOCATION == "USA"],
                  gdp.mln_usd = gdp.data$Value[gdp.data$LOCATION == "USA"],
@@ -80,7 +86,36 @@ grc = data.frame(export.mln_usd = export.data$Value[export.data$LOCATION == "GRC
 grc$net.trade = grc$export.mln_usd - grc$import.mln_usd
 ```
 
-## Deskriptivna statistika
+#### Izvoz
+
+```{r}
+usa = usa %>% mutate(import.mln_usd,
+                     import.growth = import.mln_usd - lag(import.mln_usd),
+                     import.growth.percentage = import.growth / lag(import.mln_usd) * 100)
+deu = deu %>% mutate(import.mln_usd, 
+                     import.growth = import.mln_usd - lag(import.mln_usd),
+                     import.growth.percentage = import.growth / lag(import.mln_usd) * 100)
+grc = grc %>% mutate(import.mln_usd,
+                     import.growth = import.mln_usd - lag(import.mln_usd),
+                     import.growth.percentage = import.growth / lag(import.mln_usd) * 100)
+```
+
+```{r}
+interpolate.usa = data.frame(t(rep(NA, length(names(usa)))))
+names(interpolate.usa) = names(usa)
+interpolate.usa$import.growth.percentage = mean(usa$import.growth.percentage
+                                                [time >= 2013 & time < 2019])
+interpolate.usa$import.mln_usd = usa$import.mln_usd[nrow(usa)] *
+                                 (1 + interpolate.usa$import.growth.percentage / 100)
+interpolate.usa$import.growth = interpolate.usa$import.mln_usd - usa$import.mln_usd[nrow(usa)]
+usa = rbind(usa, interpolate.usa)
+```
+
+```{r}
+summary(usa)
+summary(deu)
+summary(grc)
+```
 
 ```{r}
 boxplot(deu$import.mln_usd,
@@ -94,27 +129,101 @@ boxplot(deu$import.mln_usd,
 
 Vidimo da im se čisti uvoz u mil. USD razlikuje jako čak i na logaritamskoj skali.
 
-To možemo potvrditi i statističkim t testom.
+```{r fig.height=3}
+par(mfrow = c(1, 3), oma = c(0, 0, 2, 0))
+hist(usa$import.mln_usd, main="USA", xlab="mln USD", col="deepskyblue")
+hist(deu$import.mln_usd, main="DEU", xlab="mln USD", col="deepskyblue")
+hist(grc$import.mln_usd, main="GRC", xlab="mln USD", col="deepskyblue")
+mtext("Ukupan uvoz", outer = T, cex = 1.5, font = 2)
+```
+
+Za distribucije ukupnog uvoza ne možemo pretpostaviti normalnost, pa nema smisla raditi parametarske testove.
+
+Usporedimo sada postotnu promjenu uvoza.
+
+```{r fig.height=3}
+par(mfrow = c(1, 3), oma = c(0, 0, 2, 0))
+hist(usa$import.growth.percentage, main="USA", xlab="rast %", col="deepskyblue")
+hist(deu$import.growth.percentage, main="DEU", xlab="rast %", col="deepskyblue")
+hist(grc$import.growth.percentage, main="GRC", xlab="rast %", col="deepskyblue")
+mtext("Postotni rast uvoza", outer = T, cex = 1.5, font = 2)
+```
+
+```{r echo=FALSE, fig.height=6, message=FALSE}
+xrange = range(time)
+yrange = range(usa$import.mln_usd, deu$import.mln_usd, grc$import.mln_usd)
+
+plot(xrange, yrange, type = "n", xlab = "year", ylab = "Import [mln USD]", yaxt = "n")
+colors = rainbow(3)
+linetype = 1:3
+plotchar = seq(18, 18+2*3, 2)
+
+lines(time, usa$import.mln_usd, type = "b", lwd = 1.5,
+      lty = linetype[1], col = colors[1], pch = plotchar[1])
+lines(time, deu$import.mln_usd, type = "b", lwd = 1.5,
+      lty = linetype[2], col = colors[2], pch = plotchar[2])
+lines(time, grc$import.mln_usd, type = "b", lwd = 1.5,
+      lty = linetype[3], col = colors[3], pch = plotchar[3])
+
+title("Uvoz")
+
+marks = seq(0, 3e6, 0.5e6)
+axis(2, at = marks, labels = formatC(marks, format = "g", drop0trailing = T))
+
+
+legend(xrange[1], yrange[2], c("USA", "DEU", "GRC"), cex = 0.8, col = colors,
+       pch = plotchar, lty = linetype, title = "Država")
+grid()
+```
+
+
+Distribucije nisu previše zakrivljene i imamo dovoljno podataka da možemo pretpostaviti normalnost distribucije.
+
+Taj zaključak potvrđuju i qq plotovi.
 
 ```{r}
-t.test(log(usa$import.mln_usd), log(deu$import.mln_usd),
-       alternative = "g", var.equal = FALSE)
-t.test(log(deu$import.mln_usd), log(grc$import.mln_usd),
-       alternative = "g", var.equal = FALSE)
+qqnorm(usa$import.growth.percentage)
+qqline(usa$import.growth.percentage, col = "steelblue", lwd = 2)
+
+qqnorm(deu$import.growth.percentage)
+qqline(deu$import.growth.percentage, col = "steelblue", lwd = 2)
+
+qqnorm(grc$import.growth.percentage)
+qqline(grc$import.growth.percentage, col = "steelblue", lwd = 2)
 ```
 
 ```{r}
-usa = usa %>% mutate(import.mln_usd, import.growth = import.mln_usd - lag(import.mln_usd))
-deu = deu %>% mutate(import.mln_usd, import.growth = import.mln_usd - lag(import.mln_usd))
-grc = grc %>% mutate(import.mln_usd, import.growth = import.mln_usd - lag(import.mln_usd))
+boxplot(deu$import.growth.percentage,
+        usa$import.growth.percentage,
+        grc$import.growth.percentage,
+        names = c("DEU", "USA", "GRC"), main = "Boxplot postotnog porasta uvoza",
+        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
+        ylab = "Postotak")
 ```
+
+Ovaj plot pokazuje da bi varijable USA i DEU mogle imati istu sredinu.
+To ćemo provjeriti t testom u idućem poglavlju.
+
+## Testiranje hipoteza
+
+#### Hipoteza 0: USA i DEU imaju jednaku sredinu postotne promjene uvoza
+
+Alternativna hipoteza: USA ima veću postotnu promjenu uvoza.
 
 ```{r}
-time = 1979:2019
-plot(time, deu$import.growth, type = "h", main = "Rast uvoza (DEU)")
+t.test(usa$import.growth.percentage[-c(1)], deu$import.growth.percentage[-c(1)],
+       alternative = "g")
 ```
 
-#### Izvoz
+Test pokazuje da odbacujemo $H0$ i priklanjamo se hipotezi $H1$. USA ima veće fluktuacije u rastu uvoza.
+
+```{r, include=FALSE}
+fixed.num.breaks <- function(x, length.out = 11) {
+  return(seq(min(x, na.rm = T) - 0.5, max(x, na.rm = T) + 0.5, length.out = length.out))
+}
+deu[-c(1), ] %>% with(hist(import.growth.percentage,
+                           breaks = fixed.num.breaks(import.growth.percentage)))
+```
 
 ```{r}
 boxplot(deu$export.mln_usd,

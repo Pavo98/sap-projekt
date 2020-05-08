@@ -140,3 +140,36 @@ plot(time, deu$export.growth, type = "h", main = "Rast izvoza (DEU)")
 ```
 
 Za razliku od uvoza koji linearno raste, izvoz više "osjeća" promjene na tržištu (veće fluktuacije), npr. značajan pad izvoza 2009. godine zbog tadašnje svjetske gospodarske krize.
+
+```{r}
+boxplot(deu$gdp.mln_usd,
+        usa$gdp.mln_usd,
+        grc$gdp.mln_usd,
+        names = c("DEU", "USA", "GRC"), main = "Sredine BDP-a",
+        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
+        ylab = "mln USD (log skala)",
+        log = "y")
+```
+Kao i kod uvoza i izvoza, po čistom BDP-u SAD značajno prednjači, dok je razlika između Njemačke i Grčke veća od one između SAD-a i Njemačke. No, ovaj prikaz možda nije mjerodavan što se tiče razvijenosti. Treba pogledati BDP po stanovniku:
+```{r}
+boxplot(deu$gdp.pc.usd_cap,
+        usa$gdp.pc.usd_cap,
+        grc$gdp.pc.usd_cap,
+        names = c("DEU", "USA", "GRC"), main = "Sredine BDP-a po stanovniku",
+        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
+        ylab = " USD (log skala)",
+        log = "y")
+
+```
+Na prikazu BDP-a po stanovniku podaci su normaliziralni brojem stanovnika, razlike nisu toliko značajne, no SAD i dalje prednjači.
+```{r}
+usa = usa %>% mutate(gdp.mln_usd, gdp.growth = gdp.mln_usd - lag(gdp.mln_usd))
+deu = deu %>% mutate(gdp.mln_usd, gdp.growth = gdp.mln_usd - lag(gdp.mln_usd))
+grc = grc %>% mutate(gdp.mln_usd, gdp.growth = gdp.mln_usd - lag(gdp.mln_usd))
+```
+
+```{r}
+time = 1979:2019
+plot(time, deu$gdp.growth, type = "h", main = "Rast BDP-a (DEU)")
+```
+BDP Njemačke je u stalnom porastu uz fluktuacije, a jedini pad BDP-a koji primjećujemo vezan je uz gospodarsku krizu 2009. godine, kada primjećujemo i značajne padove u uvozu i izvozu. Rast BDP-a po stanovniku bit će proporcionalan.

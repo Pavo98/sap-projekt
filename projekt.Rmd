@@ -334,7 +334,7 @@ Iz ovoga zaključujemo da je BDP po stanovniku smislenije gledati u slučaju kad
 
 Zato u idućem testu koristimo BDP po stanovniku kao pokazatelj rasta gospodarstva.
 
-#### Pretpostavka: prosječni rast gospodarstva neke države značajno je veći u odnosu na druge
+### Pretpostavka: Prosječni rast gospodarstva neke države značajno je veći u odnosu na druge
 
 ```{r}
 ggplot(na.omit(data.all), aes(x=country, y=gdp.pc.growth.p)) +
@@ -343,6 +343,32 @@ ggplot(na.omit(data.all), aes(x=country, y=gdp.pc.growth.p)) +
   labs(title = "Rast BDP-a po stanovniku", x="Država", y="Postotak", fill="Država") +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
-Iz gornjeg prikaza se čini da se prosječni rast BDP-ova po stanovniku ove tri države ne razlikuju previše.
-To ćemo provjeriti ANOVA metodom.
+Iz gornjeg prikaza se vidi da se prosječni porasti BDP-a po stanovniku ove tri države ne razlikuju previše.
+To možemo pokušati provjeriti ANOVA metodom. Pretpostavke ANOVA-e su nezavisnost podataka, normalna distribucija i homogenost varijanci, pa ćemo homogenost varijanci 
+provjeriti Bartletovim testom:
 
+\begin{align*}
+  H_0 & : \sigma_{USA}^2 = \sigma_{DEU}^2 = \sigma_{GRC}^2 \\
+  H_1 & : \neg H_0.
+\end{align*}
+razine značajnosti 0.05
+
+```{r}
+bartlett.test(gdp.pc.growth.p ~ country, data.all)
+```
+Dobivena p vrijednost značajno je manja od razine značajnosti što znači da se odbacuje $H_0$ pa ne možemo koristiti ANOVA-u.
+
+Umjesto ANOVA-e provest ćemo neparametarski test, Kruskal-Wallis test razine značajnosti 0.05 za koji pretpostavke zahtjevane parametarskim testovima ne moraju biti ispunjene.
+Kruskal-Wallis test slabiji je od ANOVA-e i uspoređuje medijane ali ovaj test u kombinaciji s gornjim prikazom dokazat će približnu jednakost porasta gospodarstva država.
+
+\begin{align*}
+  H_0 & : M_{USA} = M_{DEU} = M_{GRC} \\
+  H_1 & : \neg H_0.
+\end{align*}
+
+
+```{r}
+kruskal.test(gdp.pc.growth.p ~ country, data.all)
+```
+Dobivena p vrijednost veća je od razine značajnosti testa te zaključujemo da se porasti BDP-a značajno ne razlikuju, podjednaki su kao što se vidi iz boxplota. 
+Odbacuje se $H_1$.

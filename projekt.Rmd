@@ -287,3 +287,62 @@ t.test(usa$export.growth.p, usa$import.growth.p, alternative = "greater", var.eq
 Dobivena p vrijednost testa je veća od razine značajnosti, te ne možemo odbaciti $H_0$.
 
 \textbf{Zaključak:} Uz dane podatke pretpostavka nije ispunjena, tj. ne možemo pokazati da se rast izvoza neke države značajno razlikuje od rasta uvoza.
+
+### Pretpostavka: Rast BDP-a značajno je veći od rasta BDP-a po stanovniku neke države
+
+```{r}
+gdp.gdppc = melt(data.all, id.vars = "country",
+               measure.vars = c("gdp.growth.p", "gdp.pc.growth.p"), na.rm = T)
+ggplot(gdp.gdppc, aes(x = country, y = value, fill = variable)) +
+  stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.75)) +
+  geom_boxplot() +
+  labs(title = "BDP/BDP po stanovniku", y="Postotak") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"), legend.position = "top")
+```
+Iz gornjeg prikaza ne čini se kao da se BDP i BDP po stanovniku određene države pretjerano razlikuju.
+Jedina primjetljivija razlika koju je kod SAD-a. Provjerit ćemo statističku značajnost pomoću t-testa.
+
+Prvo ćemo provjeriti jednakost varijanci F-testom uz razinu značajnosti $\alpha = 0.05$. Za F-test postavljamo sljedeće hipoteze:
+
+\begin{align*}
+  H_0 & : \text{Omjer varijanci} = 1 \\
+  H_1 & : \text{Omjer varijanci} \neq 1
+\end{align*}
+
+```{r}
+var.test(usa$gdp.growth.p, usa$gdp.pc.growth.p, alternative = "two.sided", na.action = na.omit)
+```
+Rezultati F-testa pokazuju da se podaci više priklanjaju hipotezi $H_0$ pa odbacujemo hipotezu $H_1$.
+Dakle, uz pretpostavku jednakosti varijanci provest ćemo t-test jednakosti sredina razine značajnosti $\alpha = 0.05$ s hipotezama:
+
+\begin{align*}
+  H_0 & : \mu_{BDP} = \mu_{BDP po stanovniku} \\
+  H_1 & : \mu_{BDP} > \mu_{BDP po stanovniku}
+\end{align*}
+
+```{r}
+t.test(usa$gdp.growth.p, usa$gdp.pc.growth.p, alternative = "greater", var.equal = TRUE,
+       na.action = na.omit)
+```
+P vrijednost t-testa manja je od razine značajnosti te odbacujemo $H_0$.
+
+\textbf{Zaključak:} Uz dane podatke pretpostavka je ispunjena, tj. možemo pokazati da se rast BDP-a neke države značajno razlikuje od rasta BDP-a po stanovniku. 
+U ovom slučaju radi se o SAD-u.
+Interpretacija? Vidimo da se BDP i BDP po stanovniku značajnije razlikuju samo za države koje u promatranom vremenskom razdoblju imaju 
+nekakav porast stanovništva, što je ovdje slučaj s SAD-om dok se za Njemačku i Grčku BDP i BDP po stanovniku značajno ne razlikuju. 
+Iz ovoga zaključujemo da je BDP po stanovniku smislenije gledati u slučaju kada u promatranom razdoblju imamo porast stanovništva.
+
+Zato u idućem testu koristimo BDP po stanovniku kao pokazatelj rasta gospodarstva.
+
+#### Pretpostavka: prosječni rast gospodarstva neke države značajno je veći u odnosu na druge
+
+```{r}
+ggplot(na.omit(data.all), aes(x=country, y=gdp.pc.growth.p)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  geom_boxplot(aes(fill=country)) +
+  labs(title = "Rast BDP-a po stanovniku", x="Država", y="Postotak", fill="Država") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+Iz gornjeg prikaza se čini da se prosječni rast BDP-ova po stanovniku ove tri države ne razlikuju previše.
+To ćemo provjeriti ANOVA metodom.
+

@@ -13,14 +13,19 @@ library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
-library(reshape2)
-
 Sys.setlocale(locale = "hr_HR.utf8")
 ```
 
+# Uvod
+
+Na gospodarstvo neke države utječu mnogi čimbenici. Najvažniji su uvoz i izvoz. Izvozom novac ”ulazi“ u državu, dok uvozom on ”izlazi“. Upravo zato države uglavnom potiču izvoz jer smatraju da on donosi nove poslove, povećanja plaća i općenito podiže životni
+standard. Analogno tome, pojedine države pokušavaju ograničiti uvoz.
+
+Analiza u ovom radu sastoji se od tri etape: deskriptivna analiza, testovi sredina i intervalne procjene, te analiza zasnovana na linearnoj regresiji i analizi varijance. 
+
 # Učitavanje podataka i deskriptivna analiza
 
-Na početku učitavamo podatke i analiziramo kako izgledaju podaci.
+Na početku učitavamo podatke i analiziramo kako izgledaju podaci. Dataset se sastoji od podataka o iznosima izvoza, uvoza, BDP-a i BDP-a per capita u milijunima američkih dolara za 20 država.
 
 ```{r}
 export.data = read.csv("Export_data.csv", fileEncoding="UTF-8-BOM")
@@ -36,7 +41,7 @@ gdp.pc.data = read.csv("GDPpercapita_data.csv", fileEncoding="UTF-8-BOM")
 # head(gdp.pc.data)
 ```
 
-Sljedeći blok koda generira dataframe sa brojem upisanih podataka te brojem procjena među upisanim podacima.
+Sljedeći blok koda generira dataframe s brojem upisanih podataka te brojem procjena među upisanim podacima.
 
 ```{r}
 export.loc.cnt = export.data %>% group_by(LOCATION) %>%
@@ -65,7 +70,8 @@ remove(export.loc.cnt, import.loc.cnt, gdp.loc.cnt, gdp.pc.loc.cnt, loc.cnt)
 ```
 
 ### Odabrane drzave
-Odabrali smo USA, Njemačku(DEU) i Grčku(GRC) za analizu.
+
+Odabrali smo USA, Njemačku(DEU) i Grčku(GRC) za analizu. Vremenski period je od 1979. do 2018. u većini analiza (nedostaju podaci iz 2019. za SAD).
 
 ## Deskriptivna statistika
 
@@ -149,9 +155,9 @@ summary(grc)
 ## Uvoz
 
 Uvozi u mil. USD razlikuju se jako čak i na logaritamskoj skali. Veličine su razmjerne površini države te broju stanovnika.
-Za distribucije ukupnog uvoza ne možemo pretpostaviti normalnost, pa nema smisla raditi parametarske testove.
+Za distribucije ukupnog uvoza ne možemo pretpostaviti normalnost pa nema smisla raditi parametarske testove.
 
-Distribucije postotnog rasta izgledaju normalnije pa ćemo njih uzeti za analizu. Dalje ćemo za postotni rast govoriti samo rast.
+Distribucije postotnog rasta izgledaju normalnije pa ćemo njih uzeti za analizu. U daljnjem tekstu ćemo za postotni rast govoriti samo rast.
 
 ```{r fig.height=3}
 par(mfrow = c(1, 3), oma = c(0, 0, 2, 0))
@@ -191,17 +197,19 @@ Ovaj plot pokazuje da bi varijable USA i DEU mogle imati istu sredinu.
 
 ## Izvoz
 
+Vrijednosti izvoza po veličini su slične s uvozom pa ćemo u analizi koristiti rast godišnjeg iznosa.
+
 ```{r}
-boxplot(deu$export.mln_usd,
-        usa$export.mln_usd,
-        grc$export.mln_usd,
-        names = c("DEU", "USA", "GRC"), main = "Sredine izvoza",
-        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
-        ylab = "mln USD (log skala)",
-        log = "y")
+ggplot(collective, aes(x=country, y=export.growth.percentage)) +
+  stat_boxplot(geom = "errorbar", na.rm = T) +
+  geom_boxplot(aes(fill=country), na.rm = T) +
+  labs(title = "Boxplot porasta izvoza", x="Država", y="Postotak", fill="Država") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
-Podaci su slični kao i kod uvoza, SAD prednjači i u izvozu u odnosu na Njemačku i Grčku.
+Za razliku od uvoza, kod izvoza se primjećuje najveći rast SAD-a, potom Njemačke i Grčke.
+
+Najveći broj stršećih vrijednosti primjećuje se kod Grčke u oba smjera, što upućuje na najveću gospodarsku nestabilnost od tri promatrane države.
 
 ```{r}
 plot(time, deu$export.growth, type = "h", main = "Rast izvoza (DEU)")
@@ -209,82 +217,102 @@ plot(time, deu$export.growth, type = "h", main = "Rast izvoza (DEU)")
 
 Za razliku od uvoza koji linearno raste, izvoz više "osjeća" promjene na tržištu (veće fluktuacije), npr. značajan pad izvoza 2009. godine zbog tadašnje svjetske gospodarske krize.
 
-```{r}
-boxplot(deu$gdp.mln_usd,
-        usa$gdp.mln_usd,
-        grc$gdp.mln_usd,
-        names = c("DEU", "USA", "GRC"), main = "Sredine BDP-a",
-        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
-        ylab = "mln USD (log skala)",
-        log = "y")
-```
-
 ## BDP
 
+```{r fig.height=3}
+par(mfrow = c(1, 3), oma = c(0, 0, 2, 0))
+hist(usa$gdp.growth.p, main="USA", xlab="rast %", col="deepskyblue")
+hist(deu$gdp.growth.p, main="DEU", xlab="rast %", col="deepskyblue")
+hist(grc$gdp.growth.p, main="GRC", xlab="rast %", col="deepskyblue")
+mtext("Postotni rast BDP-a", outer = T, cex = 1.5, font = 2)
+
+
+#boxplot(deu$gdp.mln_usd,
+ #       usa$gdp.mln_usd,
+  #      grc$gdp.mln_usd,
+   #     names = c("DEU", "USA", "GRC"), main = "Sredine BDP-a",
+    #    col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
+     #   ylab = "mln USD (log skala)",
+      #  log = "y")
+```
+
 Kao i kod uvoza i izvoza, po čistom BDP-u SAD značajno prednjači, dok je razlika između Njemačke i Grčke veća od one između SAD-a i Njemačke. No, ovaj prikaz možda nije mjerodavan što se tiče razvijenosti. Treba pogledati BDP po stanovniku:
+
 ```{r}
-boxplot(deu$gdp.pc.usd_cap,
-        usa$gdp.pc.usd_cap,
-        grc$gdp.pc.usd_cap,
-        names = c("DEU", "USA", "GRC"), main = "Sredine BDP-a po stanovniku",
-        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
-        ylab = " USD (log skala)",
-        log = "y")
+qqnorm(usa$gdp.growth.p)
+qqline(usa$gdp.growth.p, col = "steelblue", lwd = 2)
+
+qqnorm(deu$gdp.growth.p)
+qqline(deu$gdp.growth.p, col = "steelblue", lwd = 2)
+
+qqnorm(grc$gdp.growth.p)
+qqline(grc$gdp.growth.p, col = "steelblue", lwd = 2)
+```
+
+```{r}
+ggplot(na.omit(data.all), aes(x=country, y=gdp.growth.p)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  geom_boxplot(aes(fill=country)) +
+  labs(title = "Porast BDP-a", x="Država", y="Postotak", fill="Država") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
+
+```{r fig.height=3}
+par(mfrow = c(1, 3), oma = c(0, 0, 2, 0))
+hist(usa$gdp.pc.growth.p, main="USA", xlab="rast %", col="deepskyblue")
+hist(deu$gdp.pc.growth.p, main="DEU", xlab="rast %", col="deepskyblue")
+hist(grc$gdp.pc.growth.p, main="GRC", xlab="rast %", col="deepskyblue")
+mtext("Postotni rast BDP-a po stanovniku", outer = T, cex = 1.5, font = 2)
+#boxplot(deu$gdp.pc.usd_cap,
+#        usa$gdp.pc.usd_cap,
+#        grc$gdp.pc.usd_cap,
+#        names = c("DEU", "USA", "GRC"), main = "Sredine BDP-a po stanovniku",
+#        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
+#        ylab = " USD (log skala)",
+#        log = "y")
 
 ```
 Na prikazu BDP-a po stanovniku podaci su normaliziralni brojem stanovnika, razlike nisu toliko značajne, no SAD i dalje prednjači.
 
 ```{r}
 plot(time, deu$gdp.growth, type = "h", main = "Rast BDP-a (DEU)")
+plot(time, usa$gdp.growth, type="h", main = "Rast BDP-a (USA)")
+plot(time, grc$gdp.growth, type="h", main = "Rast BDP-a (GRC)")
+
 ```
-BDP Njemačke je u stalnom porastu uz fluktuacije, a jedini pad BDP-a koji primjećujemo vezan je uz gospodarsku krizu 2009. godine, kada primjećujemo i značajne padove u uvozu i izvozu. Rast BDP-a po stanovniku bit će proporcionalan.
+BDP Njemačke i SAD-a je u stalnom porastu uz fluktuacije, a jedini pad BDP-a koji primjećujemo vezan je uz gospodarsku krizu 2009. godine, kada primjećujemo i značajne padove u uvozu i izvozu. BDP Grčke ima veće fluktuacije i veća opadanja nakon 2009. godine. Rast BDP-ova po stanovniku bit će proporcionalan.
+
+```{r}
+ggplot(na.omit(data.all), aes(x=country, y=gdp.pc.growth.p)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  geom_boxplot(aes(fill=country)) +
+  labs(title = "Porast BDP-a po stanovniku", x="Država", y="Postotak", fill="Država") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
 
 ## Testiranje hipoteza
 
-### Pretpostavka: Rast izvoza značajno je veći od rasta uvoza za neku državu
+
+#### Pretpostavka: Rast BDP-a po stanovniku značajno se razlikuje od rasta BDP-a neke države
+
+
+
+#### Pretpostavka: Rast izvoza značajno je veći od rasta uvoza za neku državu
 
 ```{r}
-exp.imp = melt(data.all, id.vars = "country",
-               measure.vars = c("export.growth.p", "import.growth.p"), na.rm = T)
+library(reshape2)
+exp.imp = melt(data.all, id.vars = "country", measure.vars = c("export.growth.p", "import.growth.p"), na.rm = T)
 ggplot(exp.imp, aes(x = country, y = value, fill = variable)) +
   stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.75)) +
   geom_boxplot() +
   labs(title = "Export/Import", y="Postotak") +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold"), legend.position = "top")
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
 Pogledom na gornji boxplot čini se da se uvoz i izvoz za neku državu ne razlikuju previše.
 Jedinu značajniju razliku vidimo za USA. Provjerit ćemo je li to statistički značajno pomoću t-testa.
-
-Prvo ćemo provjeriti jednakost varijanci, ako su jednake moći ćemo koristiti inačicu t-testa sa većom snagom.
-Jednakost varijanci provjeravamo F-testom uz razinu značajnosti $\alpha = 0.05$. Za F-test postavljamo sljedeće hipoteze:
-
-\begin{align*}
-  H_0 & : \text{Omjer varijanci} = 1 \\
-  H_1 & : \text{Omjer varijanci} \neq 1
-\end{align*}
-
-```{r}
-var.test(usa$export.growth.p, usa$import.growth.p, alternative = "two.sided", na.action = na.omit)
-```
-
-P vrijednost testa jednakosti varijanci je veća od razine značajnosti, te pokazuje da se podaci više priklanjaju hipotezi $H_0$, koju ne odbacujemo.
-
-Uz pretpostavku jednakosti varijanci postavit ćemo hipoteze za t-test jednakosti sredina:
-
-\begin{align*}
-  H_0 & : \mu_{izvoz} = \mu_{uvoz} \\
-  H_1 & : \mu_{izvoz} > \mu_{uvoz}
-\end{align*}
-
-Razina značajnosti $\alpha = 0.05$.
-
-```{r}
-t.test(usa$export.growth.p, usa$import.growth.p, alternative = "greater", var.equal = TRUE,
-       na.action = na.omit)
-```
-
-Dobivena p vrijednost testa je veća od razine značajnosti, te ne možemo odbaciti $H_0$.
 
 \textbf{Zaključak:} Uz dane podatke pretpostavka nije ispunjena, tj. ne možemo pokazati da se rast izvoza neke države značajno razlikuje od rasta uvoza.
 

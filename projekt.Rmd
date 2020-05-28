@@ -140,28 +140,8 @@ grc = grc[-nrow(grc),]
 ```
 
 ```{r}
-<<<<<<< Updated upstream
 data.all = bind_rows(lapply(c("USA", "DEU", "GRC"), function (x) {
   data.frame(country=x, get(tolower(x)))
-=======
-usa = usa %>% mutate(export.mln_usd,
-                     export.growth = export.mln_usd - lag(export.mln_usd),
-                     export.growth.percentage = export.growth / lag(export.mln_usd) * 100)
-deu = deu %>% mutate(export.mln_usd, 
-                     export.growth = export.mln_usd - lag(export.mln_usd),
-                     export.growth.percentage = export.growth / lag(export.mln_usd) * 100)
-grc = grc %>% mutate(export.mln_usd,
-                     export.growth = export.mln_usd - lag(export.mln_usd),
-                     export.growth.percentage = export.growth / lag(export.mln_usd) * 100)
-# brisemo zadnju opservaciju za deu i grc jer usa nema podatke za 2019.g.
-deu = deu[-nrow(deu),]
-grc = grc[-nrow(grc),]
-```
-
-```{r}
-collective = bind_rows(lapply(c("usa", "deu", "grc"), function (x) {
-  data.frame(country=x, get(x))
->>>>>>> Stashed changes
 }))
 data.all$country = factor(data.all$country, levels = c("USA", "DEU", "GRC"))
 ```
@@ -214,17 +194,6 @@ ggplot(na.omit(data.all), aes(x=country, y=import.growth.p)) +
 ```
 
 Ovaj plot pokazuje da bi varijable USA i DEU mogle imati istu sredinu.
-<<<<<<< Updated upstream
-=======
-To ćemo provjeriti t-testom u idućem poglavlju.
-
-```{r, include=FALSE}
-fixed.num.breaks <- function(x, length.out = 11) {
-  return(seq(min(x, na.rm = T) - 0.5, max(x, na.rm = T) + 0.5, length.out = length.out))
-}
-ggplot(usa, aes(x=import.growth.percentage)) + geom_histogram()
-```
->>>>>>> Stashed changes
 
 ## Izvoz
 
@@ -243,25 +212,13 @@ Za razliku od uvoza, kod izvoza se primjećuje najveći rast SAD-a, potom Njema�
 Najveći broj stršećih vrijednosti primjećuje se kod Grčke u oba smjera, što upućuje na najveću gospodarsku nestabilnost od tri promatrane države.
 
 ```{r}
-<<<<<<< Updated upstream
 plot(time, deu$export.growth, type = "h", main = "Rast izvoza (DEU)")
-=======
-usa = usa %>% mutate(export.mln_usd, export.growth = export.mln_usd - lag(export.mln_usd))
-deu = deu %>% mutate(export.mln_usd, export.growth = export.mln_usd - lag(export.mln_usd))
-grc = grc %>% mutate(export.mln_usd, export.growth = export.mln_usd - lag(export.mln_usd))
-```
-
-```{r}
-time = 1979:2017
-plot(time, grc$export.growth, type = "h", main = "Rast izvoza (GRC)")
->>>>>>> Stashed changes
 ```
 
 Za razliku od uvoza koji linearno raste, izvoz više "osjeća" promjene na tržištu (veće fluktuacije), npr. značajan pad izvoza 2009. godine zbog tadašnje svjetske gospodarske krize.
 
-<<<<<<< Updated upstream
-
 ## BDP
+
 ```{r fig.height=3}
 par(mfrow = c(1, 3), oma = c(0, 0, 2, 0))
 hist(usa$gdp.growth.p, main="USA", xlab="rast %", col="deepskyblue")
@@ -281,20 +238,6 @@ mtext("Postotni rast BDP-a", outer = T, cex = 1.5, font = 2)
 
 Kao i kod uvoza i izvoza, po čistom BDP-u SAD značajno prednjači, dok je razlika između Njemačke i Grčke veća od one između SAD-a i Njemačke. No, ovaj prikaz možda nije mjerodavan što se tiče razvijenosti. Treba pogledati BDP po stanovniku:
 
-=======
-## BDP
-
-```{r}
-boxplot(deu$gdp.mln_usd,
-        usa$gdp.mln_usd,
-        grc$gdp.mln_usd,
-        names = c("DEU", "USA", "GRC"), main = "Sredine BDP-a",
-        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
-        ylab = "mln USD (log skala)",
-        log = "y")
-```
-Kao i kod uvoza i izvoza, po čistom BDP-u SAD značajno prednjači, dok je razlika između Njemačke i Grčke veća od one između SAD-a i Njemačke. No, ovaj prikaz nije mjerodavan što se tiče razvijenosti i standarda života. Na to ukazuje BDP po stanovniku:
->>>>>>> Stashed changes
 ```{r}
 qqnorm(usa$gdp.growth.p)
 qqline(usa$gdp.growth.p, col = "steelblue", lwd = 2)

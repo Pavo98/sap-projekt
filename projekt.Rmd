@@ -209,35 +209,43 @@ plot(time, deu$export.growth, type = "h", main = "Rast izvoza (DEU)")
 
 Za razliku od uvoza koji linearno raste, izvoz više "osjeća" promjene na tržištu (veće fluktuacije), npr. značajan pad izvoza 2009. godine zbog tadašnje svjetske gospodarske krize.
 
-```{r}
-boxplot(deu$gdp.mln_usd,
-        usa$gdp.mln_usd,
-        grc$gdp.mln_usd,
-        names = c("DEU", "USA", "GRC"), main = "Sredine BDP-a",
-        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
-        ylab = "mln USD (log skala)",
-        log = "y")
-```
-
 ## BDP
 
-Kao i kod uvoza i izvoza, po čistom BDP-u SAD značajno prednjači, dok je razlika između Njemačke i Grčke veća od one između SAD-a i Njemačke. No, ovaj prikaz možda nije mjerodavan što se tiče razvijenosti. Treba pogledati BDP po stanovniku:
-```{r}
-boxplot(deu$gdp.pc.usd_cap,
-        usa$gdp.pc.usd_cap,
-        grc$gdp.pc.usd_cap,
-        names = c("DEU", "USA", "GRC"), main = "Sredine BDP-a po stanovniku",
-        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
-        ylab = " USD (log skala)",
-        log = "y")
-
-```
-Na prikazu BDP-a po stanovniku podaci su normaliziralni brojem stanovnika, razlike nisu toliko značajne, no SAD i dalje prednjači.
+BDP po stanovniku je pokazatelj razvijenosti:
 
 ```{r}
-plot(time, deu$gdp.growth, type = "h", main = "Rast BDP-a (DEU)")
+ggplot(na.omit(data.all), aes(x=country, y=gdp.pc.usd_cap)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  geom_boxplot(aes(fill=country)) +
+  labs(title = "Sredine BDP-a po stanovniku", x="Država", y="Postotak", fill="Država") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
 ```
-BDP Njemačke je u stalnom porastu uz fluktuacije, a jedini pad BDP-a koji primjećujemo vezan je uz gospodarsku krizu 2009. godine, kada primjećujemo i značajne padove u uvozu i izvozu. Rast BDP-a po stanovniku bit će proporcionalan.
+Kao i kod uvoza i izvoza, po BDP-u po stanovniku SAD značajno prednjači, dok je razlika između Njemačke i Grčke veća od one između SAD-a i Njemačke.
+Spram čistog BDP-a kod BDP-a po stanovniku podaci su normaliziralni brojem stanovnika te su mjerodavniji.
+
+```{r}
+qqnorm(usa$gdp.pc.growth.p)
+qqline(usa$gdp.pc.growth.p, col = "steelblue", lwd = 2)
+
+qqnorm(deu$gdp.pc.growth.p)
+qqline(deu$gdp.pc.growth.p, col = "steelblue", lwd = 2)
+
+qqnorm(grc$gdp.pc.growth.p)
+qqline(grc$gdp.pc.growth.p, col = "steelblue", lwd = 2)
+```
+Imamo dovoljno podataka da iz gornjih prikaza možemo pretpostaviti normalnost distribucije postotnog porasta BDP-a po stanovniku. 
+```{r}
+plot(time, deu$gdp.growth.p, type = "h", main = "Rast BDP-a (DEU)")
+plot(time, usa$gdp.growth.p, type="h", main = "Rast BDP-a (USA)")
+plot(time, grc$gdp.growth.p, type="h", main = "Rast BDP-a (GRC)")
+
+```
+BDP Njemačke i SAD-a je u stalnom porastu uz fluktuacije, a jedini pad BDP-a koji primjećujemo vezan je uz gospodarsku krizu 2009. godine, 
+kada primjećujemo i značajne padove u uvozu i izvozu.  BDP Grčke ima veće fluktuacije i veća opadanja nakon 2009. godine. 
+Rast BDP-a po stanovniku neće se puno razlikovati, a sve razlike ovisit će o promjenama u broju stanovnika.
+
+
 
 ## Testiranje hipoteza
 
@@ -312,7 +320,7 @@ Prvo ćemo provjeriti jednakost varijanci F-testom uz razinu značajnosti $\alph
 ```{r}
 var.test(usa$gdp.growth.p, usa$gdp.pc.growth.p, alternative = "two.sided", na.action = na.omit)
 ```
-Rezultati F-testa pokazuju da se podaci više priklanjaju hipotezi $H_0$ pa odbacujemo hipotezu $H_1$.
+Rezultati F-testa pokazuju da se podaci više priklanjaju hipotezi $H_0$ te ju ne odbacujemo.
 Dakle, uz pretpostavku jednakosti varijanci provest ćemo t-test jednakosti sredina razine značajnosti $\alpha = 0.05$ s hipotezama:
 
 \begin{align*}
@@ -351,14 +359,14 @@ provjeriti Bartletovim testom:
   H_0 & : \sigma_{USA}^2 = \sigma_{DEU}^2 = \sigma_{GRC}^2 \\
   H_1 & : \neg H_0.
 \end{align*}
-razine značajnosti 0.05
+razine značajnosti $\alpha = 0.05$.
 
 ```{r}
 bartlett.test(gdp.pc.growth.p ~ country, data.all)
 ```
 Dobivena p vrijednost značajno je manja od razine značajnosti što znači da se odbacuje $H_0$ pa ne možemo koristiti ANOVA-u.
 
-Umjesto ANOVA-e provest ćemo neparametarski test, Kruskal-Wallis test razine značajnosti 0.05 za koji pretpostavke zahtjevane parametarskim testovima ne moraju biti ispunjene.
+Umjesto ANOVA-e provest ćemo neparametarski test, Kruskal-Wallis test razine značajnosti $\alpha = 0.05$ za koji pretpostavke zahtjevane parametarskim testovima ne moraju biti ispunjene.
 Kruskal-Wallis test slabiji je od ANOVA-e i uspoređuje medijane ali ovaj test u kombinaciji s gornjim prikazom dokazat će približnu jednakost porasta gospodarstva država.
 
 \begin{align*}
@@ -371,4 +379,4 @@ Kruskal-Wallis test slabiji je od ANOVA-e i uspoređuje medijane ali ovaj test u
 kruskal.test(gdp.pc.growth.p ~ country, data.all)
 ```
 Dobivena p vrijednost veća je od razine značajnosti testa te zaključujemo da se porasti BDP-a značajno ne razlikuju, podjednaki su kao što se vidi iz boxplota. 
-Odbacuje se $H_1$.
+Ne odbacujemo $H_0$.

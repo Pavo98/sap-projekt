@@ -200,7 +200,7 @@ Ovaj plot pokazuje da bi varijable USA i DEU mogle imati istu sredinu.
 Vrijednosti izvoza po veličini su slične s uvozom pa ćemo u analizi koristiti rast godišnjeg iznosa.
 
 ```{r}
-ggplot(collective, aes(x=country, y=export.growth.percentage)) +
+ggplot(na.omit(data.all), aes(x=country, y=export.growth.p)) +
   stat_boxplot(geom = "errorbar", na.rm = T) +
   geom_boxplot(aes(fill=country), na.rm = T) +
   labs(title = "Boxplot porasta izvoza", x="Država", y="Postotak", fill="Država") +

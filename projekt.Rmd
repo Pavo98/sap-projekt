@@ -242,6 +242,7 @@ BDP Njemačke je u stalnom porastu uz fluktuacije, a jedini pad BDP-a koji primj
 #### Pretpostavka: Rast izvoza značajno je veći od rasta uvoza za neku državu
 
 ```{r}
+library(reshape2)
 exp.imp = melt(data.all, id.vars = "country", measure.vars = c("export.growth.p", "import.growth.p"), na.rm = T)
 ggplot(exp.imp, aes(x = country, y = value, fill = variable)) +
   stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.75)) +
@@ -251,4 +252,9 @@ ggplot(exp.imp, aes(x = country, y = value, fill = variable)) +
 ```
 
 Pogledom na gornji boxplot čini se da se uvoz i izvoz za neku državu ne razlikuju previše.
+Jedinu značajniju razliku vidimo za USA. Provjerit ćemo je li to statistički značajno pomoću t-testa.
 
+Postavit ćemo hipoteze:
+\begin{align*}
+  H_0: &
+\end(align*)

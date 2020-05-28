@@ -13,6 +13,8 @@ library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(reshape2)
+
 Sys.setlocale(locale = "hr_HR.utf8")
 ```
 
@@ -239,22 +241,49 @@ BDP Njemačke je u stalnom porastu uz fluktuacije, a jedini pad BDP-a koji primj
 
 ## Testiranje hipoteza
 
-#### Pretpostavka: Rast izvoza značajno je veći od rasta uvoza za neku državu
+### Pretpostavka: Rast izvoza značajno je veći od rasta uvoza za neku državu
 
 ```{r}
-library(reshape2)
-exp.imp = melt(data.all, id.vars = "country", measure.vars = c("export.growth.p", "import.growth.p"), na.rm = T)
+exp.imp = melt(data.all, id.vars = "country",
+               measure.vars = c("export.growth.p", "import.growth.p"), na.rm = T)
 ggplot(exp.imp, aes(x = country, y = value, fill = variable)) +
   stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.75)) +
   geom_boxplot() +
   labs(title = "Export/Import", y="Postotak") +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"), legend.position = "top")
 ```
 
 Pogledom na gornji boxplot čini se da se uvoz i izvoz za neku državu ne razlikuju previše.
 Jedinu značajniju razliku vidimo za USA. Provjerit ćemo je li to statistički značajno pomoću t-testa.
 
-Postavit ćemo hipoteze:
+Prvo ćemo provjeriti jednakost varijanci, ako su jednake moći ćemo koristiti inačicu t-testa sa većom snagom.
+Jednakost varijanci provjeravamo F-testom uz razinu značajnosti $\alpha = 0.05$. Za F-test postavljamo sljedeće hipoteze:
+
 \begin{align*}
-  H_0: &
-\end(align*)
+  H_0 & : \text{Omjer varijanci} = 1 \\
+  H_1 & : \text{Omjer varijanci} \neq 1
+\end{align*}
+
+```{r}
+var.test(usa$export.growth.p, usa$import.growth.p, alternative = "two.sided", na.action = na.omit)
+```
+
+P vrijednost testa jednakosti varijanci je veća od razine značajnosti, te pokazuje da se podaci više priklanjaju hipotezi $H_0$, koju ne odbacujemo.
+
+Uz pretpostavku jednakosti varijanci postavit ćemo hipoteze za t-test jednakosti sredina:
+
+\begin{align*}
+  H_0 & : \mu_{izvoz} = \mu_{uvoz} \\
+  H_1 & : \mu_{izvoz} > \mu_{uvoz}
+\end{align*}
+
+Razina značajnosti $\alpha = 0.05$.
+
+```{r}
+t.test(usa$export.growth.p, usa$import.growth.p, alternative = "greater", var.equal = TRUE,
+       na.action = na.omit)
+```
+
+Dobivena p vrijednost testa je veća od razine značajnosti, te ne možemo odbaciti $H_0$.
+
+\textbf{Zaključak:} Uz dane podatke pretpostavka nije ispunjena, tj. ne možemo pokazati da se rast izvoza neke države značajno razlikuje od rasta uvoza.

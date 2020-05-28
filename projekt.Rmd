@@ -16,9 +16,16 @@ library(tidyverse)
 Sys.setlocale(locale = "hr_HR.utf8")
 ```
 
+# Uvod
+
+Na gospodarstvo neke države utječu mnogi čimbenici. Najvažniji su uvoz i izvoz. Izvozom novac ”ulazi“ u državu, dok uvozom on ”izlazi“. Upravo zato države uglavnom potiču izvoz jer smatraju da on donosi nove poslove, povećanja plaća i općenito podiže životni
+standard. Analogno tome, pojedine države pokušavaju ograničiti uvoz.
+
+Analiza u ovom radu sastoji se od tri etape: deskriptivna analiza, testovi sredina i intervalne procjene, te analiza zasnovana na linearnoj regresiji i analizi varijance. 
+
 # Učitavanje podataka i deskriptivna analiza
 
-Na početku učitavamo podatke i analiziramo kako izgledaju podaci.
+Na početku učitavamo podatke i analiziramo kako izgledaju podaci. Dataset se sastoji od podataka o iznosima izvoza, uvoza, BDP-a i BDP-a per capita u milijunima američkih dolara za 20 država.
 
 ```{r}
 export.data = read.csv("Export_data.csv", fileEncoding="UTF-8-BOM")
@@ -34,7 +41,7 @@ gdp.pc.data = read.csv("GDPpercapita_data.csv", fileEncoding="UTF-8-BOM")
 # head(gdp.pc.data)
 ```
 
-Sljedeći blok koda generira dataframe sa brojem upisanih podataka te brojem procjena među upisanim podacima.
+Sljedeći blok koda generira dataframe s brojem upisanih podataka te brojem procjena među upisanim podacima.
 
 ```{r}
 export.loc.cnt = export.data %>% group_by(LOCATION) %>%
@@ -63,7 +70,8 @@ remove(export.loc.cnt, import.loc.cnt, gdp.loc.cnt, gdp.pc.loc.cnt, loc.cnt)
 ```
 
 ### Odabrane drzave
-Odabrali smo USA, Njemačku(DEU) i Grčku(GRC) za analizu.
+
+Odabrali smo USA, Njemačku(DEU) i Grčku(GRC) za analizu. Vremenski period je od 1979. do 2018. u većini analiza (nedostaju podaci iz 2019. za SAD).
 
 ## Deskriptivna statistika
 
@@ -132,8 +140,28 @@ grc = grc[-nrow(grc),]
 ```
 
 ```{r}
+<<<<<<< Updated upstream
 data.all = bind_rows(lapply(c("USA", "DEU", "GRC"), function (x) {
   data.frame(country=x, get(tolower(x)))
+=======
+usa = usa %>% mutate(export.mln_usd,
+                     export.growth = export.mln_usd - lag(export.mln_usd),
+                     export.growth.percentage = export.growth / lag(export.mln_usd) * 100)
+deu = deu %>% mutate(export.mln_usd, 
+                     export.growth = export.mln_usd - lag(export.mln_usd),
+                     export.growth.percentage = export.growth / lag(export.mln_usd) * 100)
+grc = grc %>% mutate(export.mln_usd,
+                     export.growth = export.mln_usd - lag(export.mln_usd),
+                     export.growth.percentage = export.growth / lag(export.mln_usd) * 100)
+# brisemo zadnju opservaciju za deu i grc jer usa nema podatke za 2019.g.
+deu = deu[-nrow(deu),]
+grc = grc[-nrow(grc),]
+```
+
+```{r}
+collective = bind_rows(lapply(c("usa", "deu", "grc"), function (x) {
+  data.frame(country=x, get(x))
+>>>>>>> Stashed changes
 }))
 data.all$country = factor(data.all$country, levels = c("USA", "DEU", "GRC"))
 ```
@@ -147,9 +175,9 @@ summary(grc)
 ## Uvoz
 
 Uvozi u mil. USD razlikuju se jako čak i na logaritamskoj skali. Veličine su razmjerne površini države te broju stanovnika.
-Za distribucije ukupnog uvoza ne možemo pretpostaviti normalnost, pa nema smisla raditi parametarske testove.
+Za distribucije ukupnog uvoza ne možemo pretpostaviti normalnost pa nema smisla raditi parametarske testove.
 
-Distribucije postotnog rasta izgledaju normalnije pa ćemo njih uzeti za analizu. Dalje ćemo za postotni rast govoriti samo rast.
+Distribucije postotnog rasta izgledaju normalnije pa ćemo njih uzeti za analizu. U daljnjem tekstu ćemo za postotni rast govoriti samo rast.
 
 ```{r fig.height=3}
 par(mfrow = c(1, 3), oma = c(0, 0, 2, 0))
@@ -186,27 +214,52 @@ ggplot(na.omit(data.all), aes(x=country, y=import.growth.p)) +
 ```
 
 Ovaj plot pokazuje da bi varijable USA i DEU mogle imati istu sredinu.
+<<<<<<< Updated upstream
+=======
+To ćemo provjeriti t-testom u idućem poglavlju.
+
+```{r, include=FALSE}
+fixed.num.breaks <- function(x, length.out = 11) {
+  return(seq(min(x, na.rm = T) - 0.5, max(x, na.rm = T) + 0.5, length.out = length.out))
+}
+ggplot(usa, aes(x=import.growth.percentage)) + geom_histogram()
+```
+>>>>>>> Stashed changes
 
 ## Izvoz
 
+Vrijednosti izvoza po veličini su slične s uvozom pa ćemo u analizi koristiti rast godišnjeg iznosa.
+
 ```{r}
-boxplot(deu$export.mln_usd,
-        usa$export.mln_usd,
-        grc$export.mln_usd,
-        names = c("DEU", "USA", "GRC"), main = "Sredine izvoza",
-        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
-        ylab = "mln USD (log skala)",
-        log = "y")
+ggplot(collective, aes(x=country, y=export.growth.percentage)) +
+  stat_boxplot(geom = "errorbar", na.rm = T) +
+  geom_boxplot(aes(fill=country), na.rm = T) +
+  labs(title = "Boxplot porasta izvoza", x="Država", y="Postotak", fill="Država") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
-Podaci su slični kao i kod uvoza, SAD prednjači i u izvozu u odnosu na Njemačku i Grčku.
+Za razliku od uvoza, kod izvoza se primjećuje najveći rast SAD-a, potom Njemačke i Grčke.
+
+Najveći broj stršećih vrijednosti primjećuje se kod Grčke u oba smjera, što upućuje na najveću gospodarsku nestabilnost od tri promatrane države.
 
 ```{r}
+<<<<<<< Updated upstream
 plot(time, deu$export.growth, type = "h", main = "Rast izvoza (DEU)")
+=======
+usa = usa %>% mutate(export.mln_usd, export.growth = export.mln_usd - lag(export.mln_usd))
+deu = deu %>% mutate(export.mln_usd, export.growth = export.mln_usd - lag(export.mln_usd))
+grc = grc %>% mutate(export.mln_usd, export.growth = export.mln_usd - lag(export.mln_usd))
+```
+
+```{r}
+time = 1979:2017
+plot(time, grc$export.growth, type = "h", main = "Rast izvoza (GRC)")
+>>>>>>> Stashed changes
 ```
 
 Za razliku od uvoza koji linearno raste, izvoz više "osjeća" promjene na tržištu (veće fluktuacije), npr. značajan pad izvoza 2009. godine zbog tadašnje svjetske gospodarske krize.
 
+<<<<<<< Updated upstream
 
 ## BDP
 ```{r fig.height=3}
@@ -228,6 +281,20 @@ mtext("Postotni rast BDP-a", outer = T, cex = 1.5, font = 2)
 
 Kao i kod uvoza i izvoza, po čistom BDP-u SAD značajno prednjači, dok je razlika između Njemačke i Grčke veća od one između SAD-a i Njemačke. No, ovaj prikaz možda nije mjerodavan što se tiče razvijenosti. Treba pogledati BDP po stanovniku:
 
+=======
+## BDP
+
+```{r}
+boxplot(deu$gdp.mln_usd,
+        usa$gdp.mln_usd,
+        grc$gdp.mln_usd,
+        names = c("DEU", "USA", "GRC"), main = "Sredine BDP-a",
+        col = c("deepskyblue2", "deepskyblue3", "deepskyblue"),
+        ylab = "mln USD (log skala)",
+        log = "y")
+```
+Kao i kod uvoza i izvoza, po čistom BDP-u SAD značajno prednjači, dok je razlika između Njemačke i Grčke veća od one između SAD-a i Njemačke. No, ovaj prikaz nije mjerodavan što se tiče razvijenosti i standarda života. Na to ukazuje BDP po stanovniku:
+>>>>>>> Stashed changes
 ```{r}
 qqnorm(usa$gdp.growth.p)
 qqline(usa$gdp.growth.p, col = "steelblue", lwd = 2)

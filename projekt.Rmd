@@ -10,7 +10,7 @@ editor_options:
 
 ```{r setup, include=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 
 library(tidyverse)
 library(reshape2)
@@ -183,7 +183,7 @@ Odstupanja na krajevima qq plota nam sugeriraju da bi distribucije mogle imati t
 ggplot(na.omit(data.all), aes(x=country, y=import.growth.p)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   geom_boxplot(aes(fill=country)) +
-  labs(title = "Porast uvoza", x="Država", y="Postotak", fill="Država") +
+  labs(title = "Porast uvoza", x = "Država", y = "Postotak", fill = "Država") +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
@@ -265,7 +265,8 @@ Jednakost varijanci provjeravamo F-testom uz razinu značajnosti $\alpha = 0.05$
 \end{align*}
 
 ```{r}
-var.test(usa$export.growth.p, usa$import.growth.p, alternative = "two.sided", na.action = na.omit)
+var.test(usa$export.growth.p, usa$import.growth.p, alternative = "two.sided",
+         na.action = na.omit)
 ```
 
 P vrijednost testa jednakosti varijanci je veća od razine značajnosti, te pokazuje da se podaci više priklanjaju hipotezi $H_0$, koju ne odbacujemo.

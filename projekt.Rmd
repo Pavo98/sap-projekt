@@ -67,7 +67,7 @@ remove(export.loc.cnt, import.loc.cnt, gdp.loc.cnt, gdp.pc.loc.cnt, loc.cnt)
 ### Odabrane drzave
 Odabrali smo USA, Njemačku(DEU) i Grčku(GRC) za analizu.
 
-## Deskriptivna statistika
+# Deskriptivna statistika
 
 ```{r}
 time = 1979:2018
@@ -239,7 +239,7 @@ plot(time, deu$gdp.growth, type = "h", main = "Rast BDP-a (DEU)")
 ```
 BDP Njemačke je u stalnom porastu uz fluktuacije, a jedini pad BDP-a koji primjećujemo vezan je uz gospodarsku krizu 2009. godine, kada primjećujemo i značajne padove u uvozu i izvozu. Rast BDP-a po stanovniku bit će proporcionalan.
 
-## Testiranje hipoteza
+# Testiranje hipoteza
 
 ### Pretpostavka: Rast izvoza značajno je veći od rasta uvoza za neku državu
 
@@ -288,3 +288,31 @@ t.test(usa$export.growth.p, usa$import.growth.p, alternative = "greater", var.eq
 Dobivena p vrijednost testa je veća od razine značajnosti, te ne možemo odbaciti $H_0$.
 
 \textbf{Zaključak:} Uz dane podatke pretpostavka nije ispunjena, tj. ne možemo pokazati da se rast izvoza neke države značajno razlikuje od rasta uvoza.
+
+# Linearna regresija
+
+U ovom dijelu rada provjerit ćemo kako određene varijable(uvoz, izvoz, ...) utječu na gospodarstvo. Za to ćemo koristiti linearnu regresiju.
+Reakcije će biti neki od gospodarskih pokazatelja (GDP, GDP per capita), dok ćemo za regresore uzimati (uvoz, izvoz, neto izvoz, i dr. izvedene iz njih)
+
+## Ovisnost ukupnog GDP o neto izvozu
+
+Prvo ćemo uzeti jednostavan model linearne regresije te ispitati ovisnost ukupnog GDP o neto izvozu.
+
+```{r}
+usa.model.gdp.net = lm(gdp.pc.usd_cap ~ net.trade, data = usa)
+summary(usa.model.gdp.net)
+```
+
+```{r}
+ggplot(usa, aes(x = net.trade, y = gdp.pc.usd_cap)) +
+  geom_jitter() + 
+  geom_smooth(method = "lm")
+
+ggplot(fortify(usa.model.gdp.net), aes(x = .hat, y = .resid)) +
+  geom_jitter() +
+  geom_abline(slope = 0, intercept = 0, col = "steelblue")
+
+qqnorm(usa.model.gdp.net$residuals)
+qqline(usa.model.gdp.net$residuals, col = "steelblue", lwd = 2)
+```
+

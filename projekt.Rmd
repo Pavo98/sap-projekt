@@ -97,37 +97,42 @@ grc = data.frame(year = 1979:2019,
 grc$net.trade = grc$export.mln_usd - grc$import.mln_usd
 ```
 
+U gornjem dijelu koda spremamo podatke o uvozu, izvozu, BDP-u i BDP-u per capita po godinama u varijable za svaku državu, kao i neto razliku. Također, s obzirom na to da za distribucije apsolutnih vrijednosti ne možemo pretpostaviti normalnost, parametarske testove radimo nad postotnim promjenama (proračun prikazan na primjeru SAD-a).
+
 ```{r}
 usa = usa %>% mutate(import.mln_usd,
                      import.growth = import.mln_usd - lag(import.mln_usd),
                      import.growth.p = import.growth / lag(import.mln_usd) * 100)
+usa = usa %>% mutate(export.mln_usd, 
+                     export.growth = export.mln_usd - lag(export.mln_usd),
+                     export.growth.p = export.growth / lag(export.mln_usd) * 100)
+usa = usa %>% mutate(gdp.mln_usd,
+                     gdp.growth = gdp.mln_usd - lag(gdp.mln_usd),
+                     gdp.growth.p = gdp.growth / lag(gdp.mln_usd) * 100)
+usa = usa %>% mutate(gdp.pc.usd_cap,
+                     gdp.pc.growth = gdp.pc.usd_cap - lag(gdp.pc.usd_cap),
+                     gdp.pc.growth.p = gdp.pc.growth / lag(gdp.pc.usd_cap) * 100)
+```
+
+```{r, include=FALSE}
 deu = deu %>% mutate(import.mln_usd, 
                      import.growth = import.mln_usd - lag(import.mln_usd),
                      import.growth.p = import.growth / lag(import.mln_usd) * 100)
 grc = grc %>% mutate(import.mln_usd,
                      import.growth = import.mln_usd - lag(import.mln_usd),
                      import.growth.p = import.growth / lag(import.mln_usd) * 100)
-usa = usa %>% mutate(export.mln_usd, 
-                     export.growth = export.mln_usd - lag(export.mln_usd),
-                     export.growth.p = export.growth / lag(export.mln_usd) * 100)
 deu = deu %>% mutate(export.mln_usd,
                      export.growth = export.mln_usd - lag(export.mln_usd),
                      export.growth.p = export.growth / lag(export.mln_usd) * 100)
 grc = grc %>% mutate(export.mln_usd,
                      export.growth = export.mln_usd - lag(export.mln_usd),
                      export.growth.p = export.growth / lag(export.mln_usd) * 100)
-usa = usa %>% mutate(gdp.mln_usd,
-                     gdp.growth = gdp.mln_usd - lag(gdp.mln_usd),
-                     gdp.growth.p = gdp.growth / lag(gdp.mln_usd) * 100)
 deu = deu %>% mutate(gdp.mln_usd,
                      gdp.growth = gdp.mln_usd - lag(gdp.mln_usd),
                      gdp.growth.p = gdp.growth / lag(gdp.mln_usd) * 100)
 grc = grc %>% mutate(gdp.mln_usd,
                      gdp.growth = gdp.mln_usd - lag(gdp.mln_usd),
                      gdp.growth.p = gdp.growth / lag(gdp.mln_usd) * 100)
-usa = usa %>% mutate(gdp.pc.usd_cap,
-                     gdp.pc.growth = gdp.pc.usd_cap - lag(gdp.pc.usd_cap),
-                     gdp.pc.growth.p = gdp.pc.growth / lag(gdp.pc.usd_cap) * 100)
 deu = deu %>% mutate(gdp.pc.usd_cap,
                      gdp.pc.growth = gdp.pc.usd_cap - lag(gdp.pc.usd_cap),
                      gdp.pc.growth.p = gdp.pc.growth / lag(gdp.pc.usd_cap) * 100)
@@ -155,9 +160,8 @@ summary(grc)
 ## Uvoz
 
 Uvozi u mil. USD razlikuju se jako čak i na logaritamskoj skali. Veličine su razmjerne površini države te broju stanovnika.
-Za distribucije ukupnog uvoza ne možemo pretpostaviti normalnost pa nema smisla raditi parametarske testove.
 
-Distribucije postotnog rasta izgledaju normalnije pa ćemo njih uzeti za analizu. U daljnjem tekstu ćemo za postotni rast govoriti samo rast.
+Distribucije postotnog rasta izgledaju normalnije od ukupnog uvoza pa ćemo njih uzeti za analizu. U daljnjem tekstu ćemo za postotni rast govoriti samo rast.
 
 ```{r fig.height=3}
 par(mfrow = c(1, 3), oma = c(0, 0, 2, 0))
@@ -212,7 +216,7 @@ Za razliku od uvoza, kod izvoza se primjećuje najveći rast SAD-a, potom Njema�
 Najveći broj stršećih vrijednosti primjećuje se kod Grčke u oba smjera, što upućuje na najveću gospodarsku nestabilnost od tri promatrane države.
 
 ```{r}
-plot(time, deu$export.growth, type = "h", main = "Rast izvoza (DEU)")
+plot(time, grc$export.growth, type = "h", main = "Rast izvoza (GRC)")
 ```
 
 Za razliku od uvoza koji linearno raste, izvoz više "osjeća" promjene na tržištu (veće fluktuacije), npr. značajan pad izvoza 2009. godine zbog tadašnje svjetske gospodarske krize.
@@ -378,7 +382,7 @@ bartlett.test(gdp.pc.growth.p ~ country, data.all)
 Dobivena p vrijednost značajno je manja od razine značajnosti što znači da se odbacuje $H_0$ pa ne možemo koristiti ANOVA-u.
 
 Umjesto ANOVA-e provest ćemo neparametarski test, Kruskal-Wallis test razine značajnosti $\alpha = 0.05$ za koji pretpostavke zahtjevane parametarskim testovima ne moraju biti ispunjene.
-Kruskal-Wallis test slabiji je od ANOVA-e i uspoređuje medijane ali ovaj test u kombinaciji s gornjim prikazom dokazat će približnu jednakost porasta gospodarstva država.
+Kruskal-Wallis test slabiji je od ANOVA-e i uspoređuje medijane, ali ovaj test u kombinaciji s gornjim prikazom dokazat će približnu jednakost porasta gospodarstva država.
 
 \begin{align*}
   H_0 & : M_{USA} = M_{DEU} = M_{GRC} \\

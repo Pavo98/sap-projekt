@@ -77,7 +77,7 @@ remove(export.loc.cnt, import.loc.cnt, gdp.loc.cnt, gdp.pc.loc.cnt, loc.cnt)
 
 Odabrali smo USA, Njemačku(DEU) i Grčku(GRC) za analizu. Vremenski period je od 1979. do 2018. u većini analiza (nedostaju podaci iz 2019. za SAD).
 
-## Deskriptivna statistika
+# Deskriptivna statistika
 
 ```{r}
 time = 1979:2018
@@ -273,7 +273,7 @@ Rast BDP-a po stanovniku neće se puno razlikovati, a sve razlike ovisit će o p
 
 
 
-## Testiranje hipoteza
+# Testiranje hipoteza
 
 
 ### Pretpostavka: Rast izvoza značajno je veći od rasta uvoza za neku državu
@@ -364,9 +364,7 @@ P vrijednost t-testa manja je od razine značajnosti te odbacujemo $H_0$.
 
 \textbf{Zaključak:} Uz dane podatke pretpostavka je ispunjena, tj. možemo pokazati da se rast BDP-a neke države značajno razlikuje od rasta BDP-a po stanovniku. 
 U ovom slučaju radi se o SAD-u.
-Interpretacija? Vidimo da se BDP i BDP po stanovniku značajnije razlikuju samo za države koje u promatranom vremenskom razdoblju imaju 
-nekakav porast stanovništva, što je ovdje slučaj s SAD-om dok se za Njemačku i Grčku BDP i BDP po stanovniku značajno ne razlikuju. 
-Iz ovoga zaključujemo da je BDP po stanovniku smislenije gledati u slučaju kada u promatranom razdoblju imamo porast stanovništva.
+Vidimo da se BDP i BDP po stanovniku značajnije razlikuju samo za države koje u promatranom vremenskom razdoblju imaju nekakav porast stanovništva, što je ovdje slučaj s SAD-om dok se za Njemačku i Grčku BDP i BDP po stanovniku značajno ne razlikuju. Iz ovoga zaključujemo da je BDP po stanovniku smislenije gledati u slučaju kada u promatranom razdoblju imamo porast stanovništva.
 
 Zato u idućem testu koristimo BDP po stanovniku kao pokazatelj rasta gospodarstva.
 
@@ -406,7 +404,8 @@ Kruskal-Wallis test slabiji je od ANOVA-e i uspoređuje medijane, ali ovaj test 
 ```{r}
 kruskal.test(gdp.pc.growth.p ~ country, data.all)
 ```
-Dobivena p vrijednost veća je od razine značajnosti testa te zaključujemo da se porasti BDP-a značajno ne razlikuju, podjednaki su kao što se vidi iz boxplota. 
+
+\textbf{Zaključak:} Dobivena p vrijednost veća je od razine značajnosti testa te zaključujemo da se porasti BDP-a značajno ne razlikuju, podjednaki su kao što se vidi iz boxplota. 
 Ne odbacujemo $H_0$.
 
 # Linearna regresija
@@ -567,7 +566,7 @@ grid.arrange(p1, p2, ncol = 2, widths = c(0.4, 0.6),
              top = textGrob("DEU", gp = gpar(fontsize = 20)))
 ```
 
-Rezulatati za Grčku su slični onim za USA. Pearsonov koeficijent korelacije se povećao, te izvoz jače djeluje na GDP per capita nego uvoz.
+Rezultati za Grčku su slični onim za USA. Pearsonov koeficijent korelacije se povećao, te izvoz jače djeluje na GDP per capita nego uvoz.
 
 Reziduali i dalje nemaju homogenu varijancu. Međutim na qq plotu vidimo da sredina bolje leži na pravcu nego kod jednofaktorskog modela, ali i dalje imamo teške repove.
 
@@ -593,3 +592,8 @@ p2 = ggplot(f.grc.model, aes(sample = .stdresid)) +
 grid.arrange(p1, p2, ncol = 2, widths = c(0.4, 0.6),
              top = textGrob("GRC", gp = gpar(fontsize = 20)))
 ```
+
+# Zaključak
+
+Na dobivenim podacima proveli smo nekoliko statističkih testova hipoteza za varijable pojedine države te za odnose varijabli izmedu različitih država. Pokazali smo da se za SAD značajno razlikuje rast BDP-a i BDP-a per capita. Nismo mogli zaključiti da je rast izvoza za neku državu značajno veći od rasta uvoza i da je rast gospodarstva neke države značajno veći u odnosu na druge. Promotrili smo ovisnost BDP per capita o uvozu i izvozu. Modeli su bolje opisivali podatke u slučaju višeparametarske linearne regresije, ali i jednoparametarski modeli su dali dobru procjenu parametara.
+

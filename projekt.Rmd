@@ -10,9 +10,13 @@ editor_options:
 
 ```{r setup, include=FALSE}
 library(knitr)
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 library(tidyverse)
+library(reshape2)
+library(gridExtra)
+library(grid)
+
 Sys.setlocale(locale = "hr_HR.utf8")
 ```
 
@@ -121,18 +125,27 @@ deu = deu %>% mutate(import.mln_usd,
 grc = grc %>% mutate(import.mln_usd,
                      import.growth = import.mln_usd - lag(import.mln_usd),
                      import.growth.p = import.growth / lag(import.mln_usd) * 100)
+usa = usa %>% mutate(export.mln_usd, 
+                     export.growth = export.mln_usd - lag(export.mln_usd),
+                     export.growth.p = export.growth / lag(export.mln_usd) * 100)
 deu = deu %>% mutate(export.mln_usd,
                      export.growth = export.mln_usd - lag(export.mln_usd),
                      export.growth.p = export.growth / lag(export.mln_usd) * 100)
 grc = grc %>% mutate(export.mln_usd,
                      export.growth = export.mln_usd - lag(export.mln_usd),
                      export.growth.p = export.growth / lag(export.mln_usd) * 100)
+usa = usa %>% mutate(gdp.mln_usd,
+                     gdp.growth = gdp.mln_usd - lag(gdp.mln_usd),
+                     gdp.growth.p = gdp.growth / lag(gdp.mln_usd) * 100)
 deu = deu %>% mutate(gdp.mln_usd,
                      gdp.growth = gdp.mln_usd - lag(gdp.mln_usd),
                      gdp.growth.p = gdp.growth / lag(gdp.mln_usd) * 100)
 grc = grc %>% mutate(gdp.mln_usd,
                      gdp.growth = gdp.mln_usd - lag(gdp.mln_usd),
                      gdp.growth.p = gdp.growth / lag(gdp.mln_usd) * 100)
+usa = usa %>% mutate(gdp.pc.usd_cap,
+                     gdp.pc.growth = gdp.pc.usd_cap - lag(gdp.pc.usd_cap),
+                     gdp.pc.growth.p = gdp.pc.growth / lag(gdp.pc.usd_cap) * 100)
 deu = deu %>% mutate(gdp.pc.usd_cap,
                      gdp.pc.growth = gdp.pc.usd_cap - lag(gdp.pc.usd_cap),
                      gdp.pc.growth.p = gdp.pc.growth / lag(gdp.pc.usd_cap) * 100)
@@ -193,7 +206,7 @@ Odstupanja na krajevima qq plota nam sugeriraju da bi distribucije mogle imati t
 ggplot(na.omit(data.all), aes(x=country, y=import.growth.p)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   geom_boxplot(aes(fill=country)) +
-  labs(title = "Porast uvoza", x="Država", y="Postotak", fill="Država") +
+  labs(title = "Porast uvoza", x = "Država", y = "Postotak", fill = "Država") +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 ```
 
@@ -266,13 +279,13 @@ Rast BDP-a po stanovniku neće se puno razlikovati, a sve razlike ovisit će o p
 ### Pretpostavka: Rast izvoza značajno je veći od rasta uvoza za neku državu
 
 ```{r}
-library(reshape2)
-exp.imp = melt(data.all, id.vars = "country", measure.vars = c("export.growth.p", "import.growth.p"), na.rm = T)
+exp.imp = melt(data.all, id.vars = "country",
+               measure.vars = c("export.growth.p", "import.growth.p"), na.rm = T)
 ggplot(exp.imp, aes(x = country, y = value, fill = variable)) +
   stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.75)) +
   geom_boxplot() +
   labs(title = "Export/Import", y="Postotak") +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"), legend.position = "top")
 ```
 
 Pogledom na gornji boxplot čini se da se uvoz i izvoz za neku državu ne razlikuju previše.
@@ -395,3 +408,188 @@ kruskal.test(gdp.pc.growth.p ~ country, data.all)
 ```
 Dobivena p vrijednost veća je od razine značajnosti testa te zaključujemo da se porasti BDP-a značajno ne razlikuju, podjednaki su kao što se vidi iz boxplota. 
 Ne odbacujemo $H_0$.
+
+# Linearna regresija
+
+U ovom dijelu rada provjerit ćemo kako određene varijable(uvoz, izvoz, ...) utječu na gospodarstvo. Za to ćemo koristiti linearnu regresiju.
+Reakcije će biti neki od gospodarskih pokazatelja (GDP, GDP per capita), dok ćemo za regresore uzimati (uvoz, izvoz, neto izvoz, i dr. izvedene iz njih)
+
+## Ovisnost GDP per capita o izvozu
+
+Prvo ćemo uzeti jednostavan model linearne regresije te ispitati ovisnost GDP per capita o izvozu.
+
+```{r, fig.height=4}
+ggplot(usa, aes(x = export.mln_usd, y = gdp.pc.usd_cap)) +
+  geom_jitter() + 
+  geom_smooth(method = "lm") +
+  labs(title = "USA")
+
+ggplot(deu, aes(x = export.mln_usd, y = gdp.pc.usd_cap)) +
+  geom_jitter() + 
+  geom_smooth(method = "lm") +
+  labs(title = "DEU")
+
+ggplot(grc, aes(x = export.mln_usd, y = gdp.pc.usd_cap)) +
+  geom_jitter() + 
+  geom_smooth(method = "lm") +
+  labs(title = "GRC")
+```
+
+Nulta hipoteza je da varijable nemaju linearnu ovisnost, te ako dobijemo p vrijednost manju od 0.05 odbacit ćemo nultu hipotezu i prihvatiti alternativnu - varijable imaju linearnu ovisnost.
+
+```{r}
+usa.lm.gdp.exp = lm(gdp.pc.usd_cap ~ export.mln_usd, data = usa)
+summary(usa.lm.gdp.exp)
+
+deu.lm.gdp.exp = lm(gdp.pc.usd_cap ~ export.mln_usd, data = deu)
+summary(deu.lm.gdp.exp)
+
+grc.lm.gdp.exp = lm(gdp.pc.usd_cap ~ export.mln_usd, data = grc)
+summary(grc.lm.gdp.exp)
+```
+
+Prema kriteriju odlučivanja odbacujemo nultu hipotezu, te zaključujemo da varijable imaju linearnu vezu. Valja primjetiti da je $R^2$ vrijednost velika što upućuje na snažnu linearnu vezu.
+
+Sada ćemo analizirati reziduale. 
+
+Prvo ćemo analizirati reziduale za USA. Na plotu lijevo vidimo da varijanca nije skroz homogena, primjećujemo neka manja grupiranja vrijednosti. Na qq plotu standardiziranih reziduala vidimo da se reziduali ne poklapaju baš najbolje sa normalnom distribucijom, što nam sugerira da postoji još neka varijanca u podacima te da ovaj model nije dobar.
+
+```{r, fig.width=10, fig.height=4}
+f.usa.model = fortify(usa.lm.gdp.exp)
+
+p1 = ggplot(f.usa.model, aes(x = .fitted, y = .stdresid)) +
+  geom_jitter() +
+  geom_abline(slope = 0, intercept = 0, col = "steelblue") +
+  labs(title = "Scatterplot reziduala", x = expression(hat(y)), y = "Standardizirani reziduali")
+
+p2 = ggplot(f.usa.model, aes(sample = .stdresid)) + 
+  geom_qq() +
+  geom_qq_line(color = "steelblue") +
+  labs(title = "Normal Q-Q plot")
+
+grid.arrange(p1, p2, ncol = 2, widths = c(0.4, 0.6),
+             top = textGrob("USA", gp = gpar(fontsize = 20)))
+```
+
+```{r, fig.width=10, fig.height=4}
+f.deu.model = fortify(deu.lm.gdp.exp)
+
+p1 = ggplot(f.usa.model, aes(x = .fitted, y = .stdresid)) +
+  geom_jitter() +
+  geom_abline(slope = 0, intercept = 0, col = "steelblue") +
+  labs(title = "Scatterplot reziduala", x = expression(hat(y)), y = "Standardizirani reziduali")
+
+p2 = ggplot(f.usa.model, aes(sample = .stdresid)) + 
+  geom_qq() +
+  geom_qq_line(color = "steelblue") +
+  labs(title = "Normal Q-Q plot")
+
+grid.arrange(p1, p2, ncol = 2, widths = c(0.4, 0.6),
+             top = textGrob("DEU", gp = gpar(fontsize = 20)))
+```
+
+```{r, fig.width=10, fig.height=4}
+f.grc.model = fortify(grc.lm.gdp.exp)
+
+p1 = ggplot(f.usa.model, aes(x = .fitted, y = .stdresid)) +
+  geom_jitter() +
+  geom_abline(slope = 0, intercept = 0, col = "steelblue") +
+  labs(title = "Scatterplot reziduala", x = expression(hat(y)), y = "Standardizirani reziduali")
+
+p2 = ggplot(f.usa.model, aes(sample = .stdresid)) + 
+  geom_qq() +
+  geom_qq_line(color = "steelblue") +
+  labs(title = "Normal Q-Q plot")
+
+grid.arrange(p1, p2, ncol = 2, widths = c(0.4, 0.6),
+             top = textGrob("GRC", gp = gpar(fontsize = 20)))
+```
+
+Reziduali za Njemačku i Grčku su slični onim za USA pa vrijede isti zaključci.
+
+## Ovisnost GDP per capita o više varijabli
+
+Za problem određivanja veze razvijenosti gospodarstva i ostalih faktora koji utječu na razvijenost, model s jednim regresorom nam nije najbolje objašnjavao varijancu podataka.
+Sada ćemo napraviti kompleksniji model koji će koristiti više regresora - model višestruke regresije.
+
+Kao regresore uzet ćemo izvoz i uvoz, a za reakciju GDP per capita.
+
+```{r}
+usa.lm = lm(gdp.pc.usd_cap ~ export.mln_usd + import.mln_usd, data = usa)
+summary(usa.lm)
+```
+
+Model sa više regresora za USA ima veći $R^2$ nego s jednim regresorom. Postoji jača linearna veza.
+
+Analiza reziduala pokazuje da sa više regresora bolje objašnjavamo varijancu nego s jednim regresorom.
+Međutim qq plot pokazuje da distibucija reziduala i dalje ima teške repove.
+
+```{r, fig.width=10, fig.height=4}
+f.usa.model = fortify(usa.lm)
+
+p1 = ggplot(f.usa.model, aes(x = .fitted, y = .stdresid)) +
+  geom_jitter() +
+  geom_abline(slope = 0, intercept = 0, col = "steelblue") +
+  labs(title = "Scatterplot reziduala", x = expression(hat(y)), y = "Standardizirani reziduali")
+
+p2 = ggplot(f.usa.model, aes(sample = .stdresid)) + 
+  geom_qq() +
+  geom_qq_line(color = "steelblue") +
+  labs(title = "Normal Q-Q plot")
+
+grid.arrange(p1, p2, ncol = 2, widths = c(0.4, 0.6),
+             top = textGrob("USA", gp = gpar(fontsize = 20)))
+```
+
+Kod Njemčke također vidimo porast $R^2$ u modelu s više regresora. Parametri modela koje smo izračunali su neobični. Model ima pozitivnu vezu s uvozom, a negativnu vezu s izvozom. Logična veza je obratna od ove izračunate u modelu. Također vidimo da izvoz ne doprinosi značajno prilikom prilagodbe modela.
+
+```{r}
+deu.lm = lm(gdp.pc.usd_cap ~ export.mln_usd + import.mln_usd, data = deu)
+summary(deu.lm)
+```
+
+Reziduali ovog modela izgledaju malo bolje nego kod modela s jednim regresorom.
+
+```{r, fig.width=10, fig.height=4}
+f.deu.model = fortify(deu.lm)
+
+p1 = ggplot(f.deu.model, aes(x = .fitted, y = .stdresid)) +
+  geom_jitter() +
+  geom_abline(slope = 0, intercept = 0, col = "steelblue") +
+  labs(title = "Scatterplot reziduala", x = expression(hat(y)), y = "Standardizirani reziduali")
+
+p2 = ggplot(f.deu.model, aes(sample = .stdresid)) + 
+  geom_qq() +
+  geom_qq_line(color = "steelblue") +
+  labs(title = "Normal Q-Q plot")
+
+grid.arrange(p1, p2, ncol = 2, widths = c(0.4, 0.6),
+             top = textGrob("DEU", gp = gpar(fontsize = 20)))
+```
+
+Rezulatati za Grčku su slični onim za USA. Pearsonov koeficijent korelacije se povećao, te izvoz jače djeluje na GDP per capita nego uvoz.
+
+Reziduali i dalje nemaju homogenu varijancu. Međutim na qq plotu vidimo da sredina bolje leži na pravcu nego kod jednofaktorskog modela, ali i dalje imamo teške repove.
+
+```{r}
+grc.lm = lm(gdp.pc.usd_cap ~ export.mln_usd + import.mln_usd, data = grc)
+summary(grc.lm)
+```
+
+
+```{r, fig.width=10, fig.height=4}
+f.grc.model = fortify(grc.lm)
+
+p1 = ggplot(f.grc.model, aes(x = .fitted, y = .stdresid)) +
+  geom_jitter() +
+  geom_abline(slope = 0, intercept = 0, col = "steelblue") +
+  labs(title = "Scatterplot reziduala", x = expression(hat(y)), y = "Standardizirani reziduali")
+
+p2 = ggplot(f.grc.model, aes(sample = .stdresid)) + 
+  geom_qq() +
+  geom_qq_line(color = "steelblue") +
+  labs(title = "Normal Q-Q plot")
+
+grid.arrange(p1, p2, ncol = 2, widths = c(0.4, 0.6),
+             top = textGrob("GRC", gp = gpar(fontsize = 20)))
+```
